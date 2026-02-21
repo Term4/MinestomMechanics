@@ -68,5 +68,5 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-    failOnNoDiscoveredTests = false
+    failOnNoDiscoveredTests.set(false)
 }
