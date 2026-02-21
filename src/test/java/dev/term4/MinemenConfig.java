@@ -1,8 +1,8 @@
 package dev.term4;
 
-import io.github.Term4.minestommechanics.mechanics.knockback.KnockbackConfig;
+import io.github.term4.minestommechanics.mechanics.knockback.KnockbackConfig;
 
-import static io.github.Term4.minestommechanics.mechanics.knockback.KnockbackConfig.defaultConfig;
+import static io.github.term4.minestommechanics.mechanics.knockback.KnockbackConfig.defaultConfig;
 
 public class MinemenConfig {
 

@@ -1,10 +1,10 @@
 package dev.term4;
 
-import io.github.Term4.minestommechanics.MinestomMechanics;
-import io.github.Term4.minestommechanics.mechanics.combat.Combat;
-import io.github.Term4.minestommechanics.mechanics.damage.DamageConfig;
-import io.github.Term4.minestommechanics.mechanics.damage.DamageSystem;
-import io.github.Term4.minestommechanics.mechanics.knockback.KnockbackSystem;
+import io.github.term4.minestommechanics.MinestomMechanics;
+import io.github.term4.minestommechanics.mechanics.combat.Combat;
+import io.github.term4.minestommechanics.mechanics.damage.DamageConfig;
+import io.github.term4.minestommechanics.mechanics.damage.DamageSystem;
+import io.github.term4.minestommechanics.mechanics.knockback.KnockbackSystem;
 import net.minestom.server.Auth;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.coordinate.Pos;
@@ -34,9 +34,7 @@ public class Test {
         System.setProperty("minestom.tps", "20");
 
         // Initialize the server
-        MinecraftServer server = MinecraftServer.init(
-                new Auth.Velocity("mbsxcYVtdk62") // dont forget to change it back to Auth.Bungee
-        );
+        MinecraftServer server = MinecraftServer.init(new Auth.Bungee());
 
         MinecraftServer.getCommandManager().register(new TeleportCommand());
 
