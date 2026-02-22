@@ -2,10 +2,10 @@ package io.github.term4.minestommechanics.mechanics.attack.rulesets;
 
 import io.github.term4.minestommechanics.Services;
 import io.github.term4.minestommechanics.mechanics.attack.AttackSnapshot;
-import io.github.term4.minestommechanics.mechanics.knockback.KnockbackSnapshot;
-import io.github.term4.minestommechanics.mechanics.knockback.KnockbackSystem;
 import io.github.term4.minestommechanics.mechanics.damage.DamageRequest;
 import io.github.term4.minestommechanics.mechanics.damage.DamageSystem;
+import io.github.term4.minestommechanics.mechanics.knockback.KnockbackSnapshot;
+import io.github.term4.minestommechanics.mechanics.knockback.KnockbackSystem;
 import net.minestom.server.entity.LivingEntity;
 
 import static io.github.term4.minestommechanics.mechanics.damage.DamageTypes.PLAYER_ATTACK;

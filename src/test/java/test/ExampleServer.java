@@ -17,6 +17,8 @@ import net.minestom.server.instance.InstanceContainer;
 import net.minestom.server.instance.InstanceManager;
 import net.minestom.server.instance.LightingChunk;
 import net.minestom.server.instance.block.Block;
+import net.minestom.server.item.ItemStack;
+import net.minestom.server.item.Material;
 import net.minestom.server.timer.TaskSchedule;
 
 public class ExampleServer {
@@ -36,8 +38,8 @@ public class ExampleServer {
         System.setProperty("minestom.tps", "20");
 
         // Initialize the server
+        //  bungee auth allows 1.7 clients to join (velocity works for all later versions, and a proxy is not required)
         MinecraftServer server = MinecraftServer.init(new Auth.Bungee());
-        // bungee auth allows 1.7 clients to join (velocity works for all later versions, and a proxy is not required)
 
         // Get mm instance
         MinestomMechanics mm = MinestomMechanics.getInstance();
@@ -90,6 +92,10 @@ public class ExampleServer {
                     return TaskSchedule.stop();
                 }, TaskSchedule.tick(20));
             }
+
+            player.getInventory().addItemStack(ItemStack.of(Material.SHIELD));
+            player.setChestplate(ItemStack.of(Material.ELYTRA));
+
         });
 
         // Start the server

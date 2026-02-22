@@ -7,7 +7,6 @@ import io.github.term4.minestommechanics.util.InvulnerabilityState;
 import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.event.Event;
-import net.minestom.server.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 // This is the public facing API users can hook into to get information or change how a knockback event happens

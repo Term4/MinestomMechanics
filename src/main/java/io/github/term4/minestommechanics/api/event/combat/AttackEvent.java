@@ -2,8 +2,8 @@ package io.github.term4.minestommechanics.api.event.combat;
 
 import io.github.term4.minestommechanics.Services;
 import io.github.term4.minestommechanics.mechanics.Cause;
-import io.github.term4.minestommechanics.mechanics.attack.rulesets.AttackProcessor;
 import io.github.term4.minestommechanics.mechanics.attack.AttackSnapshot;
+import io.github.term4.minestommechanics.mechanics.attack.rulesets.AttackProcessor;
 import io.github.term4.minestommechanics.util.InvulnerabilityState;
 import io.github.term4.minestommechanics.util.SprintTracker;
 import net.minestom.server.entity.Entity;

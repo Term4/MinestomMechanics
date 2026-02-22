@@ -1,8 +1,8 @@
 package io.github.term4.minestommechanics;
 
 import io.github.term4.minestommechanics.mechanics.attack.AttackSystem;
-import io.github.term4.minestommechanics.mechanics.knockback.KnockbackSystem;
 import io.github.term4.minestommechanics.mechanics.damage.DamageSystem;
+import io.github.term4.minestommechanics.mechanics.knockback.KnockbackSystem;
 import io.github.term4.minestommechanics.platform.client.ClientInfoService;
 import io.github.term4.minestommechanics.platform.client.VersionDetector;
 import io.github.term4.minestommechanics.util.SprintTracker;
@@ -22,10 +22,12 @@ public final class MinestomMechanics {
 
     // Server level options (defaults)
     /** When enabled the server listens for player details sent from ViaVersion proxy message */
-    public boolean viaProxyDetails = false; // false by default
+    public boolean viaProxyDetails = true; // false by default
 
     /** When enabled MinestomMechanics manually tracks a players sprinting status (useful for combat). Default: true */
     public boolean installSprintTracker = true;
+
+    public boolean metaFix = true;
 
     // might add an option for packet validation when not using a proxy? probably better to use a separate library for that though
     private final EventNode<@NotNull Event> root = EventNode.all("mm:root");
