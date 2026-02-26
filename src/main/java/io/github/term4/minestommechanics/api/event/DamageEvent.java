@@ -1,4 +1,4 @@
-package io.github.term4.minestommechanics.api.event.damage;
+package io.github.term4.minestommechanics.api.event;
 
 import io.github.term4.minestommechanics.mechanics.damage.DamageConfig;
 import net.minestom.server.entity.Entity;

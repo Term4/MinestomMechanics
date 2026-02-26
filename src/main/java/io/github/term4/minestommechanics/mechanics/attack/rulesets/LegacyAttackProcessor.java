@@ -1,5 +1,6 @@
 package io.github.term4.minestommechanics.mechanics.attack.rulesets;
 
+import io.github.term4.echofix.EchoFixPlayer;
 import io.github.term4.minestommechanics.Services;
 import io.github.term4.minestommechanics.mechanics.attack.AttackSnapshot;
 import io.github.term4.minestommechanics.mechanics.damage.DamageRequest;
@@ -28,8 +29,16 @@ public record LegacyAttackProcessor(Services services) implements AttackProcesso
                 damage.apply(DamageRequest.of(living, PLAYER_ATTACK)
                         .attacker(snap.attacker())
                         .source(snap.attacker())
-                        .amount(1.0f)
+                        .amount(0.01f)
                 );
+            }
+        }
+        // 3. Apply sprint modification to the attacker // TODO: Decide what sprint buffer to use here
+        if (snap.attacker() instanceof LivingEntity le) {
+            if (le instanceof EchoFixPlayer efp) {
+                efp.suppressSelf(() -> efp.setSprinting(false));
+            } else {
+                le.setSprinting(false);
             }
         }
     }

@@ -1,6 +1,6 @@
 package io.github.term4.minestommechanics;
 
-import io.github.term4.minestommechanics.compatibility.proxy.ProxyPlayer;
+import io.github.term4.echofix.EchoFix;
 import io.github.term4.minestommechanics.mechanics.attack.AttackSystem;
 import io.github.term4.minestommechanics.mechanics.damage.DamageSystem;
 import io.github.term4.minestommechanics.mechanics.knockback.KnockbackSystem;
@@ -70,7 +70,7 @@ public final class MinestomMechanics {
         VelocityEstimator.install(root);
 
         if (metaFix) {
-            MinecraftServer.getConnectionManager().setPlayerProvider(ProxyPlayer::new);
+            EchoFix.install(); // TODO: Introduce OptimizedPlayer, maybe stop using EchoFix externally (avoids multiple extensions of player)
         }
 
         if (installSprintTracker) {

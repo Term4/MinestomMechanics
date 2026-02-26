@@ -2,10 +2,8 @@ package io.github.term4.minestommechanics.mechanics.knockback;
 
 import io.github.term4.minestommechanics.MinestomMechanics;
 import io.github.term4.minestommechanics.Services;
-import io.github.term4.minestommechanics.api.event.knockback.KnockbackEvent;
-import io.github.term4.minestommechanics.util.SprintTracker;
+import io.github.term4.minestommechanics.api.event.KnockbackEvent;
 import net.minestom.server.coordinate.Vec;
-import net.minestom.server.entity.LivingEntity;
 import net.minestom.server.event.Event;
 import net.minestom.server.event.EventNode;
 import org.jetbrains.annotations.NotNull;
@@ -54,11 +52,6 @@ public final class KnockbackSystem {
 
         // Apply knockback to target
         if (velocity != null) finalSnap.target().setVelocity(velocity);
-
-        // Modify attackers sprint status
-        if (finalSnap.source() instanceof LivingEntity le && SprintTracker.isSprinting(services.sprintTracker(), le, config().sprintBuffer)) { // TODO: Add to API + metadata sprint fix (BetterSlowDown)
-            le.setSprinting(false); // Try cancelling metadata packet fix, if that doesn't work, track sprint differently and dont set state
-        }
     }
 
     public KnockbackConfig config() { return config; }

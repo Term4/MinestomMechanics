@@ -38,8 +38,7 @@ public class ExampleServer {
         System.setProperty("minestom.tps", "20");
 
         // Initialize the server
-        //  bungee auth allows 1.7 clients to join (velocity works for all later versions, and a proxy is not required)
-        MinecraftServer server = MinecraftServer.init(new Auth.Bungee());
+        MinecraftServer server = MinecraftServer.init(new Auth.Bungee()); // bungee auth allows 1.7 clients to join (velocity works for all later versions, and a proxy is not required)
 
         // Get mm instance
         MinestomMechanics mm = MinestomMechanics.getInstance();
@@ -49,7 +48,7 @@ public class ExampleServer {
         mm.init();
 
         // 1. Initialize knockback system
-        KnockbackSystem.install(mm, MinemenConfig.minemen());
+        KnockbackSystem.install(mm, MinemenConfig.minemenKb());
 
         // 2. Initialize damage system
         DamageSystem.install(mm, new DamageConfig());
@@ -95,6 +94,9 @@ public class ExampleServer {
 
             player.getInventory().addItemStack(ItemStack.of(Material.SHIELD));
             player.setChestplate(ItemStack.of(Material.ELYTRA));
+
+            player.getAttribute(net.minestom.server.entity.attribute.Attribute.MOVEMENT_SPEED)
+                    .setBaseValue(0.1 * (1 + (0.2 * 2))); // Speed II
 
         });
 

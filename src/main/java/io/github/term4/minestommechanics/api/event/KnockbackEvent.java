@@ -1,4 +1,4 @@
-package io.github.term4.minestommechanics.api.event.knockback;
+package io.github.term4.minestommechanics.api.event;
 
 import io.github.term4.minestommechanics.mechanics.Cause;
 import io.github.term4.minestommechanics.mechanics.knockback.KnockbackConfig;

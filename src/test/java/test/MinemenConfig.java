@@ -6,22 +6,23 @@ import static io.github.term4.minestommechanics.mechanics.knockback.KnockbackCon
 
 public class MinemenConfig {
 
-    public static KnockbackConfig minemen() {
+    public static KnockbackConfig minemenKb() {
         var c = defaultConfig();
-        c.horizontal = 0.525;
+        c.sprintBuffer = 8;
+        c.horizontal = 0.52725;
         c.vertical = 0.4;
-        c.extraHorizontal = 0.3534;
-        c.extraVertical = 0.5;
-        c.verticalLimit = 0.365;
+        c.extraHorizontal = 0.32625;
+        c.extraVertical = 0.0;
+        c.verticalLimit = 0.3615;
         c.yawWeight = 0.5;
         c.extraYawWeight = 0.5;
-        c.frictionH = 7.0;
-        c.frictionV = 6.5;
-        c.frictionExtraH = 6.0;
-        c.frictionExtraV = 6.5;
-        c.rangeStartExtraH = 4.0;
-        c.rangeFactorExtraH = 0.25;
-        c.rangeMaxH = 0.4;
+        c.frictionH = 0;
+        c.frictionV = 0;
+        c.frictionExtraH = 0;
+        c.frictionExtraV = 0;
+        c.rangeStartExtraH = 3.325;
+        c.rangeFactorExtraH = 0.5;
+        c.rangeMaxH = 0.40;
         return c;
     }
 

@@ -1,7 +1,7 @@
 package io.github.term4.minestommechanics.mechanics.attack;
 
 import io.github.term4.minestommechanics.MinestomMechanics;
-import io.github.term4.minestommechanics.api.event.combat.AttackEvent;
+import io.github.term4.minestommechanics.api.event.AttackEvent;
 import io.github.term4.minestommechanics.mechanics.attack.hitdetection.PacketHit;
 import io.github.term4.minestommechanics.mechanics.attack.rulesets.AttackProcessor;
 import net.minestom.server.event.Event;

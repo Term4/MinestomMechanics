@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 
+// TODO: Add idle / active state handling (each can have an entirely custom "sub" config, which can be override selectively from the api snapshot)
 public final class KnockbackCalculator {
 
     private final Services services;

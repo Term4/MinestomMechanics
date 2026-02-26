@@ -1,4 +1,4 @@
-package io.github.term4.minestommechanics.api.event.combat;
+package io.github.term4.minestommechanics.api.event;
 
 import io.github.term4.minestommechanics.Services;
 import io.github.term4.minestommechanics.mechanics.Cause;

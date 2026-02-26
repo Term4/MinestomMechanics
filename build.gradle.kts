@@ -54,6 +54,7 @@ dependencies {
     val junitVersion = "6.0.3"
 
     compileOnly("net.minestom:minestom:$minestomVersion")
+    api("io.github.term4:minestom-echo-fix:1.0.0")
 
     // Unit testing
     testImplementation("net.minestom:minestom:$minestomVersion")
