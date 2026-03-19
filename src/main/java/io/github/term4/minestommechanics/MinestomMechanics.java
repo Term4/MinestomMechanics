@@ -2,10 +2,12 @@ package io.github.term4.minestommechanics;
 
 import io.github.term4.echofix.EchoFix;
 import io.github.term4.minestommechanics.mechanics.attack.AttackSystem;
+import io.github.term4.minestommechanics.platform.player.OptimizedPlayer;
 import io.github.term4.minestommechanics.mechanics.damage.DamageSystem;
 import io.github.term4.minestommechanics.mechanics.knockback.KnockbackSystem;
 import io.github.term4.minestommechanics.platform.client.ClientInfoService;
 import io.github.term4.minestommechanics.platform.client.VersionDetector;
+import io.github.term4.minestommechanics.util.GroundTracker;
 import io.github.term4.minestommechanics.util.SprintTracker;
 import io.github.term4.minestommechanics.util.TickClock;
 import io.github.term4.minestommechanics.util.VelocityEstimator;
@@ -27,6 +29,8 @@ public final class MinestomMechanics {
 
     /** When enabled MinestomMechanics manually tracks a players sprinting status (useful for combat). Default: true */
     public boolean installSprintTracker = true;
+    /** When enabled, tracks ground state for "on ground in past N ticks" predicates. Default: true */
+    public boolean installGroundTracker = true;
 
     public boolean metaFix = true;
 
@@ -39,16 +43,19 @@ public final class MinestomMechanics {
 
     // Optional registry
     private @Nullable SprintTracker sprintTracker;
+    private @Nullable GroundTracker groundTracker;
     private @Nullable AttackSystem attackSystem;
     private @Nullable KnockbackSystem knockbackSystem;
     private @Nullable DamageSystem damageSystem;
 
     void registerSprintTracker(SprintTracker s) { sprintTracker = s; }
+    void registerGroundTracker(GroundTracker g) { groundTracker = g; }
     public void registerAttack(AttackSystem a) { attackSystem = a; }
     public void registerKnockback(KnockbackSystem k) { knockbackSystem = k; }
     public void registerDamage(DamageSystem d) { damageSystem = d; }
 
     public @Nullable SprintTracker sprintTracker() { return sprintTracker; }
+    public @Nullable GroundTracker groundTracker() { return groundTracker; }
     public @Nullable AttackSystem attackSystem() { return attackSystem; }
     public @Nullable KnockbackSystem knockbackSystem() { return knockbackSystem; }
     public @Nullable DamageSystem damageSystem() { return damageSystem; }
@@ -70,13 +77,20 @@ public final class MinestomMechanics {
         VelocityEstimator.install(root);
 
         if (metaFix) {
-            EchoFix.install(); // TODO: Introduce OptimizedPlayer, maybe stop using EchoFix externally (avoids multiple extensions of player)
+            EchoFix.install();
+            MinecraftServer.getConnectionManager().setPlayerProvider((conn, profile) ->
+                    new OptimizedPlayer(conn, profile));
         }
 
         if (installSprintTracker) {
             var tracker = new SprintTracker();
             registerSprintTracker(tracker);
             root.addChild(tracker.node());
+        }
+        if (installGroundTracker) {
+            var tracker = new GroundTracker();
+            tracker.start();
+            registerGroundTracker(tracker);
         }
 
         clientInfo = new ClientInfoService();

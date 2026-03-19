@@ -1,11 +1,15 @@
 package test;
 
 import io.github.term4.minestommechanics.MinestomMechanics;
-import io.github.term4.minestommechanics.mechanics.attack.AttackConfig;
+import io.github.term4.minestommechanics.Vanilla18;
 import io.github.term4.minestommechanics.mechanics.attack.AttackSystem;
 import io.github.term4.minestommechanics.mechanics.damage.DamageConfig;
 import io.github.term4.minestommechanics.mechanics.damage.DamageSystem;
 import io.github.term4.minestommechanics.mechanics.knockback.KnockbackSystem;
+import io.github.term4.minestommechanics.platform.player.OptimizedPlayer;
+import net.minestom.server.entity.GameMode;
+import test.presets.Hypixel;
+import test.presets.Minemen;
 import io.github.term4.minestommechanics.platform.client.ClientInfoService;
 import net.minestom.server.Auth;
 import net.minestom.server.MinecraftServer;
@@ -48,20 +52,20 @@ public class ExampleServer {
         mm.init();
 
         // 1. Initialize knockback system
-        KnockbackSystem.install(mm, MinemenConfig.minemenKb());
+        KnockbackSystem.install(mm, Hypixel.kb());
 
         // 2. Initialize damage system
         DamageSystem.install(mm, new DamageConfig());
 
         // 3. Initialize combat system
-        AttackSystem.install(mm, new AttackConfig());
+        AttackSystem.install(mm, Minemen.atk());
 
         // Create the instance (world)
         InstanceManager instanceManager = MinecraftServer.getInstanceManager();
         InstanceContainer instanceContainer = instanceManager.createInstanceContainer();
 
         // Generate the world & add lighting
-        instanceContainer.setGenerator(unit -> unit.modifier().fillHeight(0, 40, Block.GRASS_BLOCK));
+        instanceContainer.setGenerator(unit -> unit.modifier().fillHeight(0, 40, Block.RED_TERRACOTTA));
         instanceContainer.setChunkSupplier(LightingChunk::new);
 
         // Add an event handler to handle player spawning
@@ -70,6 +74,10 @@ public class ExampleServer {
             final Player player = event.getPlayer();
             event.setSpawningInstance(instanceContainer);
             player.setRespawnPoint(new Pos(0, 42, 0));
+
+            if (player instanceof OptimizedPlayer opt) {
+                opt.setPositionBroadcastInterval(2);
+            }
 
             // Example of how to get a players protocol on login (with multiple attempts, stops once protocol is known)
             if (mm.viaProxyDetails) {
@@ -92,14 +100,15 @@ public class ExampleServer {
                 }, TaskSchedule.tick(20));
             }
 
-            player.getInventory().addItemStack(ItemStack.of(Material.SHIELD));
-            player.setChestplate(ItemStack.of(Material.ELYTRA));
+            player.getInventory().addItemStack(ItemStack.of(Material.WHITE_WOOL, 1000));
 
-            player.getAttribute(net.minestom.server.entity.attribute.Attribute.MOVEMENT_SPEED)
+            /*player.getAttribute(net.minestom.server.entity.attribute.Attribute.MOVEMENT_SPEED)
                     .setBaseValue(0.1 * (1 + (0.2 * 2))); // Speed II
 
-        });
+             */
 
+        });
+        
         // Start the server
         server.start("0.0.0.0", 25566);
     }

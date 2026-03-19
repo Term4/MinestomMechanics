@@ -7,6 +7,7 @@ import net.minestom.server.entity.Player;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+// TODO: Can probably replace this entire thing with custom player and just track / attach data there?
 public final class ClientInfoService {
 
     // This class stores ONLY client information relevant to this library. For now only the protocol version.

@@ -1,10 +1,11 @@
 package io.github.term4.minestommechanics.api.event;
 
 import io.github.term4.minestommechanics.Services;
+import io.github.term4.minestommechanics.mechanics.attack.AttackConfigResolver;
+import io.github.term4.minestommechanics.mechanics.attack.AttackSystem;
 import io.github.term4.minestommechanics.mechanics.Cause;
 import io.github.term4.minestommechanics.mechanics.attack.AttackSnapshot;
 import io.github.term4.minestommechanics.mechanics.attack.rulesets.AttackProcessor;
-import io.github.term4.minestommechanics.util.InvulnerabilityState;
 import io.github.term4.minestommechanics.util.SprintTracker;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.LivingEntity;
@@ -32,11 +33,15 @@ public final class AttackEvent implements Event {
     private boolean cancelled;
 
     private final Services services;
+    private final AttackConfigResolver.ResolvedAttackConfig resolvedConfig;
 
     public AttackEvent(AttackSnapshot snapshot, Services services) {
         this.snapshot = snapshot;
         this.services = services;
-        this.invulnerable = snapshot.target() != null && InvulnerabilityState.isInvulnerable(snapshot.target());
+        this.invulnerable = snapshot.target() != null && AttackSystem.isInvulnerableToAttack(snapshot.target());
+        this.resolvedConfig = snapshot.config() != null
+                ? AttackConfigResolver.resolve(snapshot.config(), AttackConfigResolver.AttackContext.of(snapshot, services))
+                : AttackConfigResolver.ResolvedAttackConfig.defaults();
     }
 
     // Setters
@@ -62,8 +67,9 @@ public final class AttackEvent implements Event {
     public @Nullable ItemStack overrideItem() { return overrideItem; }
     public boolean sprint() {
         if (overrideSprint != null) return overrideSprint;
-        if (!(attacker() instanceof Player p) || finalSnap.config() == null) { return attacker().isSprinting(); }
-        return SprintTracker.isSprinting(services.sprintTracker(), p, finalSnap.config().sprintBuffer);
+        if (!(attacker() instanceof Player p) || services.sprintTracker() == null) { return attacker().isSprinting(); }
+        int buffer = resolvedConfig.sprintBuffer() != null ? resolvedConfig.sprintBuffer() : 0;
+        return SprintTracker.wasRecentlySprinting(services.sprintTracker(), p, buffer);
     }
     public @Nullable ItemStack item() {
         if (overrideItem != null) return overrideItem;
@@ -71,5 +77,8 @@ public final class AttackEvent implements Event {
     }
 
     public boolean cancelled() { return cancelled; }
+
+    /** Resolved attack config for this event. */
+    public AttackConfigResolver.ResolvedAttackConfig resolvedConfig() { return resolvedConfig; }
 
 }

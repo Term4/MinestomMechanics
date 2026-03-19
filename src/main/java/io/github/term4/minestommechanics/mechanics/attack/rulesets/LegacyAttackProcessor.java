@@ -33,7 +33,7 @@ public record LegacyAttackProcessor(Services services) implements AttackProcesso
                 );
             }
         }
-        // 3. Apply sprint modification to the attacker // TODO: Decide what sprint buffer to use here
+        // Modify attacker sprint
         if (snap.attacker() instanceof LivingEntity le) {
             if (le instanceof EchoFixPlayer efp) {
                 efp.suppressSelf(() -> efp.setSprinting(false));

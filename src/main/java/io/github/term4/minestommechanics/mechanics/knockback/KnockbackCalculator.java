@@ -9,40 +9,42 @@ import net.minestom.server.coordinate.Point;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.Entity;
-import net.minestom.server.entity.LivingEntity;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 
-// TODO: Add idle / active state handling (each can have an entirely custom "sub" config, which can be override selectively from the api snapshot)
 public final class KnockbackCalculator {
 
     private final Services services;
+    private final KnockbackConfig defaults;
 
     private static final double MIN_DIST = 1e-6; // distance at which position delta direction is degenerate
     private final double tps = ServerFlag.SERVER_TICKS_PER_SECOND;
 
-    public KnockbackCalculator(Services services) {
+    public KnockbackCalculator(Services services, KnockbackConfig defaults) {
         this.services = services;
+        this.defaults = defaults;
     }
 
     public @Nullable Vec compute(KnockbackSnapshot snap) {
+        KnockbackConfig base = snap.config();
+        if (base == null) return null;
 
-        // Knockback Context
-        DirContext ctx = dirCtx(snap);
-        if (ctx == null) return null;
+        KnockbackConfig merged = base.fromBase(defaults);
+        KnockbackConfigResolver.KnockbackContext ctx = KnockbackConfigResolver.KnockbackContext.of(snap, services);
+        KnockbackConfigResolver.ResolvedKnockbackConfig cfg = KnockbackConfigResolver.resolve(merged, ctx);
 
-        KnockbackConfig cfg = snap.config();
+        DirContext dctx = dirCtx(snap);
+        if (dctx == null) return null;
         Cause cause = snap.cause();
-        boolean hasExtra = extra(snap) > 0;
+        boolean hasExtra = extra(snap, cfg) > 0;
 
         Entity t = snap.target();
-        Point oPt = ctx.oPt();
+        Point oPt = dctx.oPt();
         Point tPt = t.getPosition();
-        Vec dir3D = ctx.dir();
+        Vec dir3D = dctx.dir();
 
-        // Direction
         Vec dDirH = deltaH(oPt, tPt);
         Vec yDirH = yawDir(dir3D);
         Vec dDirV = deltaV(oPt, tPt);
@@ -50,58 +52,65 @@ public final class KnockbackCalculator {
 
         RawDirs raw = new RawDirs(dDirH, dDirV, yDirH, pDirV);
         DirAndStrength normKb = resolveDS(raw, cfg, false);
-        DirAndStrength extraKb = hasExtra ? resolveDS(raw, cfg, true) :  null;
+        DirAndStrength extraKb = hasExtra ? resolveDS(raw, cfg, true) : null;
 
-        // Strength
         Vec kb = normKb.direction().mul(normKb.h(), normKb.v(), normKb.h());
         Vec kbe = extraKb != null ? extraKb.direction().mul(extraKb.h(), extraKb.v(), extraKb.h()) : null;
 
-        // Normal KB
-        kb = applyRr(kb, oPt, tPt, cfg, false);         // Range Reduction
-        kb = applyAMult(kb, t, cfg, false);             // Air Multiplier
-        kb = applySweeping(kb, cause, cfg, false);      // Modifiers
+        kb = applyRr(kb, oPt, tPt, cfg, false);
+        kb = applySweeping(kb, cause, cfg, false);
 
-        // Extra KB
         if (kbe != null) {
-            kbe = applyRr(kbe, oPt, tPt, cfg, true);    // Range Reduction
-            kbe = applyAMult(kbe, t, cfg, true);        // Air Multiplier
-            kbe = applySweeping(kbe, cause, cfg, true); // Modifiers
+            kbe = applyRr(kbe, oPt, tPt, cfg, true);
+            kbe = applySweeping(kbe, cause, cfg, true);
         }
+
+        Double fHVal = kbe != null ? cfg.frictionExtraH() : cfg.frictionH();
+        Double fVVal = kbe != null ? cfg.frictionExtraV() : cfg.frictionV();
+        double fH = fHVal != null ? fHVal : 0;
+        double fV = fVVal != null ? fVVal : 0;
+        double iFH = fH > 0 ? 1.0 / fH : 0;
+        double iFV = fV > 0 ? 1.0 / fV : 0;
+        boolean useAbsH = Boolean.TRUE.equals(kbe != null ? cfg.useAbsFrictionEH() : cfg.useAbsFrictionH());
+        boolean useAbsV = Boolean.TRUE.equals(kbe != null ? cfg.useAbsFrictionEV() : cfg.useAbsFrictionV());
+        boolean extra = kbe != null;
+        KnockbackConfig.VelocityMethod modeH = extra ? cfg.velocityModeExtraH() : cfg.velocityModeH();
+        KnockbackConfig.VelocityMethod modeV = extra ? cfg.velocityModeExtraV() : cfg.velocityModeV();
+        KnockbackConfig.VelocityMethod fallback = cfg.velocityMethod() != null ? cfg.velocityMethod() : KnockbackConfig.VelocityMethod.DELTA;
+        if (modeH == null) modeH = fallback;
+        if (modeV == null) modeV = fallback;
+        Vec velH = VelocityEstimator.getVelocityForMethod(t, modeH, cfg.gravityPredictPerTick(), cfg.gravityPredictScale());
+        Vec velV = VelocityEstimator.getVelocityForMethod(t, modeV, cfg.gravityPredictPerTick(), cfg.gravityPredictScale());
+        double motX = useAbsH ? -Math.abs(velH.x()) : velH.x();
+        double motY = useAbsV ? -Math.abs(velV.y()) : velV.y();
+        double motZ = useAbsH ? -Math.abs(velH.z()) : velH.z();
+        kb = new Vec(motX * iFH + kb.x(), motY * iFV + kb.y(), motZ * iFH + kb.z());
+
+        if (cfg.horizontalBounds() != null) kb = applyHorizontalBounds(kb, cfg.horizontalBounds());
+        if (cfg.verticalBounds() != null) kb = applyVerticalBounds(kb, cfg.verticalBounds());
 
         Vec kbVec = kbe != null ? addVectors(kb, kbe, cfg) : kb;
 
-        // Friction
-        double fH = kbe != null ? cfg.frictionExtraH : cfg.frictionH;
-        double fV = kbe != null ? cfg.frictionExtraV : cfg.frictionV;
-        Vec mot = VelocityEstimator.getVelocity(t);
-        double iFH = fH > 0 ? 1.0 / fH : 0;
-        double iFV = fV > 0 ? 1.0 / fV : 0;
-        kbVec = new Vec(mot.x() * iFH + kbVec.x(),
-                mot.y() * iFV + kbVec.y(),
-                mot.z() * iFH + kbVec.z());
-
-        if (cfg.verticalLimit > 0) {
-            double y = Math.max(-cfg.verticalLimit, Math.min(cfg.verticalLimit, kbVec.y())); // NOTE: could be weird with pitch / height delta
-            kbVec = new Vec(kbVec.x(), y, kbVec.z());
+        if (kbe != null) {
+            if (cfg.extraHorizontalBounds() != null) kbVec = applyHorizontalBounds(kbVec, cfg.extraHorizontalBounds());
+            if (cfg.extraVerticalBounds() != null) kbVec = applyVerticalBounds(kbVec, cfg.extraVerticalBounds());
         }
 
-        kbVec = new Vec(kbVec.x() * tps, kbVec.y() * tps, kbVec.z() * tps);
-
-        return kbVec;
+        return new Vec(kbVec.x() * tps, kbVec.y() * tps, kbVec.z() * tps);
     }
 
-    /** Resolves "extra" knockback involved in knockback event. */
-    private int extra(KnockbackSnapshot snap) {
-        int extra = 0;
+    public KnockbackConfigResolver.ResolvedKnockbackConfig resolveConfig(KnockbackSnapshot snap) {
+        KnockbackConfig merged = snap.config() != null ? snap.config().fromBase(defaults) : defaults;
+        KnockbackConfigResolver.KnockbackContext ctx = KnockbackConfigResolver.KnockbackContext.of(snap, services);
+        return KnockbackConfigResolver.resolve(merged, ctx);
+    }
 
-        // Only melee causes extra (for now) TODO: add handling for non-melee extra (e.g. punch bows)
-        if (!snap.cause().isMelee()) return extra;
-
+    private int extra(KnockbackSnapshot snap, KnockbackConfigResolver.ResolvedKnockbackConfig cfg) {
+        if (!snap.cause().isMelee()) return 0;
         Entity a = snap.source();
-        if (a == null) return extra;
-
-        if (SprintTracker.isSprinting(services.sprintTracker(), a, snap.config().sprintBuffer)) extra++;
-        return extra;
+        if (a == null) return 0;
+        int sprBuf = cfg.sprintBuffer() != null ? cfg.sprintBuffer() : 0;
+        return SprintTracker.wasRecentlySprinting(services.sprintTracker(), a, sprBuf) ? 1 : 0;
     }
 
     /** Gets the direction context for this knockback. */
@@ -129,21 +138,16 @@ public final class KnockbackCalculator {
     /** Raw position and yaw/pitch directions */
     private record RawDirs(Vec posH, Vec posV, Vec yaw, Vec pitch) {}
 
-    /**
-     * Combines raw directions into one direction and strength.
-     * extra=true uses "extra" knockback values (sprint, enchantment)
-     */
-    private DirAndStrength resolveDS(RawDirs raw, KnockbackConfig cfg, boolean extra) {
-        double h = extra ? cfg.extraHorizontal :  cfg.horizontal;
-        double v = extra ? cfg.extraVertical : cfg.vertical;
-        double yw = extra ? cfg.extraYawWeight : cfg.yawWeight;
-        double pw =  extra ? cfg.extraPitchWeight : cfg.pitchWeight;
-        double hw = extra ? cfg.extraHeightDelta : cfg.heightDelta;
+    private DirAndStrength resolveDS(RawDirs raw, KnockbackConfigResolver.ResolvedKnockbackConfig cfg, boolean extra) {
+        double h = or(extra ? cfg.extraHorizontal() : cfg.horizontal(), 0);
+        double v = or(extra ? cfg.extraVertical() : cfg.vertical(), 0);
+        double yw = or(extra ? cfg.extraYawWeight() : cfg.yawWeight(), 0);
+        double pw = or(extra ? cfg.extraPitchWeight() : cfg.pitchWeight(), 0);
+        double hw = or(extra ? cfg.extraHeightDelta() : cfg.heightDelta(), 0);
 
         Vec dirH; Vec dirV; double magH = h; double magV = v;
 
-        // Horizontal
-        if (cfg.horizontalCombine == KnockbackConfig.DirectionMode.VECTOR_ADDITION) {
+        if (cfg.horizontalCombine() == KnockbackConfig.DirectionMode.VECTOR_ADDITION) {
             double posMag = h * (1 - yw);
             double lookMag = h * yw;
             double cx = raw.posH().x() * posMag + raw.yaw().x() * lookMag;
@@ -152,11 +156,10 @@ public final class KnockbackCalculator {
             dirH = len < MIN_DIST ? raw.yaw() : new Vec(cx / len, 0, cz / len);
             magH = len < MIN_DIST ? h : len;
         } else {
-            dirH = blend(raw.posH(), raw.yaw(), 1-yw, yw, KnockbackCalculator::ranDirH);
+            dirH = blend(raw.posH(), raw.yaw(), 1 - yw, yw, KnockbackCalculator::ranDirH);
         }
 
-        // Vertical
-        if (cfg.verticalCombine == KnockbackConfig.DirectionMode.VECTOR_ADDITION) {
+        if (cfg.verticalCombine() == KnockbackConfig.DirectionMode.VECTOR_ADDITION) {
             double heightMag = v * hw;
             double pitchMag = v * pw;
             double cy = raw.pitch().y() * pitchMag + raw.posV().y() * heightMag;
@@ -172,10 +175,26 @@ public final class KnockbackCalculator {
         return new DirAndStrength(dir3D, magH, magV);
     }
 
-    /** Combines normal and extra knockback vectors. */
-    private Vec addVectors(Vec a, Vec b, KnockbackConfig cfg) {
-        boolean hAdd = cfg.horizontalCombine == KnockbackConfig.DirectionMode.VECTOR_ADDITION;
-        boolean vAdd = cfg.verticalCombine == KnockbackConfig.DirectionMode.VECTOR_ADDITION;
+    private static Vec applyVerticalBounds(Vec v, KnockbackConfig.Bounds b) {
+        double y = v.y();
+        if (b.lower() != null) y = Math.max(y, b.lower());
+        if (b.upper() != null) y = Math.min(y, b.upper());
+        return new Vec(v.x(), y, v.z());
+    }
+
+    private static Vec applyHorizontalBounds(Vec v, KnockbackConfig.Bounds b) {
+        double hMag = Math.sqrt(v.x() * v.x() + v.z() * v.z());
+        if (hMag < MIN_DIST) return v;
+        double mag = hMag;
+        if (b.lower() != null && mag < b.lower()) mag = b.lower();
+        if (b.upper() != null && mag > b.upper()) mag = b.upper();
+        double scale = mag / hMag;
+        return new Vec(v.x() * scale, v.y(), v.z() * scale);
+    }
+
+    private Vec addVectors(Vec a, Vec b, KnockbackConfigResolver.ResolvedKnockbackConfig cfg) {
+        boolean hAdd = cfg.horizontalCombine() == KnockbackConfig.DirectionMode.VECTOR_ADDITION;
+        boolean vAdd = cfg.verticalCombine() == KnockbackConfig.DirectionMode.VECTOR_ADDITION;
 
         double resX, resZ, resY;
 
@@ -263,21 +282,22 @@ public final class KnockbackCalculator {
         return sum.lengthSquared() < MIN_DIST *  MIN_DIST ? ranDir.get() : sum.normalize();
     }
 
-    /** Applies range reduction (reduces knockback based on distance between attacker & victim).*/
-    private Vec applyRr(Vec kb, Point aPt, Point vPt, KnockbackConfig cfg, boolean hasExtra) {
+    private Vec applyRr(Vec kb, Point aPt, Point vPt, KnockbackConfigResolver.ResolvedKnockbackConfig cfg, boolean hasExtra) {
         double dh = Math.sqrt(Math.pow(vPt.x() - aPt.x(), 2) + Math.pow(vPt.z() - aPt.z(), 2));
         double dv = Math.abs(vPt.y() - aPt.y());
 
-        double rsh = hasExtra ? cfg.rangeStartExtraH : cfg.rangeStartH;
-        double rfh = hasExtra ? cfg.rangeFactorExtraH : cfg.rangeFactorH;
-        double rsv = hasExtra ? cfg.rangeStartExtraV : cfg.rangeStartV;
-        double rfv = hasExtra ? cfg.rangeFactorExtraV : cfg.rangeFactorV;
+        double rsh = or(hasExtra ? cfg.rangeStartExtraH() : cfg.rangeStartH(), 0);
+        double rfh = or(hasExtra ? cfg.rangeFactorExtraH() : cfg.rangeFactorH(), 0);
+        double rsv = or(hasExtra ? cfg.rangeStartExtraV() : cfg.rangeStartV(), 0);
+        double rfv = or(hasExtra ? cfg.rangeFactorExtraV() : cfg.rangeFactorV(), 0);
 
         double sh = dh <= rsh ? 1.0 : 1.0 - rfh * (dh - rsh);
         double sv = dv <= rsv ? 1.0 : 1.0 - rfv * (dv - rsv);
 
-        if (cfg.rangeMaxH > 0) sh = Math.max(sh, cfg.rangeMaxH);
-        if (cfg.rangeMaxV > 0) sv = Math.max(sv, cfg.rangeMaxV);
+        Double rmh = cfg.rangeMaxH();
+        Double rmv = cfg.rangeMaxV();
+        if (rmh != null && rmh > 0) sh = Math.max(sh, rmh);
+        if (rmv != null && rmv > 0) sv = Math.max(sv, rmv);
 
         sh = Math.max(0, Math.min(1, sh));
         sv = Math.max(0, Math.min(1, sv));
@@ -285,33 +305,14 @@ public final class KnockbackCalculator {
         return new Vec(kb.x() * sh, kb.y() * sv, kb.z() * sh);
     }
 
-    /** Applies air multipliers (how knockback is effected when the victim is in the air) */
-    private Vec applyAMult(Vec kb, Entity e, KnockbackConfig cfg, boolean hasExtra) {
-        boolean inAir = e instanceof LivingEntity le && !le.isOnGround();
-        if (!inAir) return kb;
-
-        double mH = hasExtra ? cfg.aMultExtraH : cfg.aMultH;
-        double mV = hasExtra ? cfg.aMultExtraV : cfg.aMultV;
-
-        Vec result = new Vec(kb.x() * mH, kb.y() * mV, kb.z() * mH);
-
-        if (cfg.aMultVLimit > 0) {
-            double y = Math.min(cfg.aMultVLimit, result.y()); // NOTE: could get weird with pitch / height delta
-            result = new Vec(result.x(), y, result.z());
-        }
-        return result;
-    }
-
-    /** Reduces knockback for sweeping attacks */
-    private Vec applySweeping(Vec kb, Cause cause, KnockbackConfig cfg, boolean hasExtra) {
+    private Vec applySweeping(Vec kb, Cause cause, KnockbackConfigResolver.ResolvedKnockbackConfig cfg, boolean hasExtra) {
         if (cause != Cause.SWEEPING) return kb;
-
-        double sfh = hasExtra ? cfg.sweepFactorExtraH : cfg.sweepFactorH;
-        double sfv = hasExtra ? cfg.sweepFactorExtraV : cfg.sweepFactorV;
-
+        double sfh = or(hasExtra ? cfg.sweepFactorExtraH() : cfg.sweepFactorH(), 0);
+        double sfv = or(hasExtra ? cfg.sweepFactorExtraV() : cfg.sweepFactorV(), 0);
         double sh = 1.0 - sfh;
         double sv = 1.0 - sfv;
-
         return new Vec(kb.x() * sh, kb.y() * sv, kb.z() * sh);
     }
+
+    private static double or(Double v, double def) { return v != null ? v : def; }
 }

@@ -3,7 +3,7 @@ package io.github.term4.minestommechanics.api.event;
 import io.github.term4.minestommechanics.mechanics.Cause;
 import io.github.term4.minestommechanics.mechanics.knockback.KnockbackConfig;
 import io.github.term4.minestommechanics.mechanics.knockback.KnockbackSnapshot;
-import io.github.term4.minestommechanics.util.InvulnerabilityState;
+import io.github.term4.minestommechanics.mechanics.knockback.KnockbackSystem;
 import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.event.Event;
@@ -25,7 +25,7 @@ public final class KnockbackEvent implements Event {
 
     public KnockbackEvent(KnockbackSnapshot snap) {
         this.snap = snap;
-        this.invulnerable = snap.target() != null && InvulnerabilityState.isInvulnerable(snap.target());
+        this.invulnerable = snap.target() != null && KnockbackSystem.isInvulnerableToKnockback(snap.target());
     }
 
     /** Original attack data (immutable) */

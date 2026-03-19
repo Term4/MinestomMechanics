@@ -1,5 +1,6 @@
 package io.github.term4.minestommechanics.mechanics;
 
+// TODO: Potentially remove this entirely??
 public enum Cause {
     ATTACK_PACKET, SWING_RAYCAST, SWEEPING, PROJECTILE, EXPLOSION, DAMAGE;
 
