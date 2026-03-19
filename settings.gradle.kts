@@ -1,3 +1,11 @@
 rootProject.name = "MinestomMechanics"
 
-includeBuild("../minestom-echo-fix")
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        mavenCentral()
+        mavenLocal()
+        maven("https://jitpack.io")
+        maven { url = uri("https://jitpack.io") }
+    }
+}
