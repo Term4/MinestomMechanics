@@ -51,7 +51,6 @@ dependencies {
 
     implementation("com.github.Term4:minestom-echo-fix:v0.1.1")
     compileOnly("net.minestom:minestom:$minestomVersion")
-    api("io.github.term4:minestom-echo-fix:1.0.0")
 
     // Unit testing
     testImplementation("net.minestom:minestom:$minestomVersion")
