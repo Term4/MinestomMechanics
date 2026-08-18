@@ -177,7 +177,7 @@ class BlockBreakingTest extends HeadlessServerTest {
                 .breakRule(BlockBreaking.BreakRule.neverBreaks(Set.of(Block.GLASS)))
                 .shielding(BlockBreaking.Shielding.OCCLUSION).interaction(BlockBreaking.Interaction.DESTROY_NO_DROPS).build())
                 .explode(inst, new Pos(bx + 0.5 + jx, by + 0.5, bz + 0.5 + jz), 4.0f);
-        return inst.getBlock(bx - 1, by, bz - 1).isAir();
+        return inst.getBlock(bx - 1, by, bz - 1).air();
     }
 
     /**
@@ -296,7 +296,7 @@ class BlockBreakingTest extends HeadlessServerTest {
         inst.setBlock(bx + 1, by, bz, Block.DIRT);
         inst.setBlock(bx, by, bz - 1, Block.GLASS.withTag(placed, true));
         detonate(new ExplosionSystem(polyp, cfg), inst, 4.0f);
-        assertTrue(inst.getBlock(bx - 1, by, bz).isAir(), "player-placed dirt breaks");
+        assertTrue(inst.getBlock(bx - 1, by, bz).air(), "player-placed dirt breaks");
         assertTrue(inst.getBlock(bx + 1, by, bz).compare(Block.DIRT), "unplaced dirt survives the app rule");
         assertTrue(inst.getBlock(bx, by, bz - 1).compare(Block.GLASS), "blast-proof glass survives even player-placed");
     }

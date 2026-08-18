@@ -79,7 +79,7 @@ final class ExplosionBlocks {
                     int x = cx + dx, y = cy + dy, z = cz + dz;
                     BlockVec pos = new BlockVec(x, y, z);
                     Block block = loadedBlock(world, pos);
-                    if (block == null || block.isAir() || cfg.canBreak(block, pos, ctx)) continue;
+                    if (block == null || block.air() || cfg.canBreak(block, pos, ctx)) continue;
                     if (mask == null) mask = new boolean[side * side * side];
                     mask[(x - minX) + side * ((y - minY) + side * (z - minZ))] = true;
                 }
@@ -235,7 +235,7 @@ final class ExplosionBlocks {
                     BlockVec pos = new BlockVec(Math.floor(center.x()) + dx, Math.floor(center.y()) + dy,
                             Math.floor(center.z()) + dz);
                     Block block = loadedBlock(world, pos);
-                    if (block == null || block.isAir() || Double.isInfinite(cfg.resistance(block, ctx))) continue;
+                    if (block == null || block.air() || Double.isInfinite(cfg.resistance(block, ctx))) continue;
                     if (cfg.canBreak(block, pos, ctx)) hit.add(pos);
                 }
             }
@@ -252,7 +252,7 @@ final class ExplosionBlocks {
     /** {@code -1} = contributes nothing (1.8: air; modern: air with no fluid). */
     private static double resistance(Block block, BlockBreaking cfg, ExplosionContext ctx, boolean modern) {
         double fluid = modern && isFluid(block) ? FLUID_RESISTANCE : -1;
-        if (block.isAir()) return fluid;
+        if (block.air()) return fluid;
         double own = cfg.resistance(block, ctx);
         return Math.max(own, fluid);
     }
@@ -274,7 +274,7 @@ final class ExplosionBlocks {
         var rnd = ThreadLocalRandom.current();
         for (Point pos : blocks) {
             Block block = world.getBlock(pos);
-            if (block.isAir()) continue;
+            if (block.air()) continue;
             if (cfg.interaction() != BlockBreaking.Interaction.DESTROY_NO_DROPS) {
                 for (ItemStack stack : BlockBreaking.dropsOf(block)) {
                     // vanilla decay is a per-ITEM roll at 1/power, not one roll for the stack
@@ -302,8 +302,8 @@ final class ExplosionBlocks {
         var rnd = ThreadLocalRandom.current();
         for (Point pos : blocks) {
             if (rnd.nextInt(3) != 0) continue;
-            if (!world.getBlock(pos).isAir()) continue;
-            if (!world.getBlock(pos.sub(0, 1, 0)).isSolid()) continue;
+            if (!world.getBlock(pos).air()) continue;
+            if (!world.getBlock(pos.sub(0, 1, 0)).solid()) continue;
             world.setBlock(pos, Block.FIRE);
         }
     }

@@ -106,7 +106,7 @@ public final class Explosion {
     // 1.8 getHeadHeight (eye − 0.08 sneaking); the −1e-6 is the captured knife-edge: a blast exactly at the sneak eye
     // pushes DOWN, at the standing eye UP
     private static double pushEye(Entity e) {
-        double eye = e.getEntityType().registry().eyeHeight();
+        double eye = e.getEntityType().eyeHeight();
         return e instanceof Player p && p.isSneaking() ? eye - 0.08 - 1.0e-6 : eye;
     }
 

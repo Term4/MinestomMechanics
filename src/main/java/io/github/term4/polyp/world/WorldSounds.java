@@ -41,7 +41,7 @@ public final class WorldSounds {
 
     private static void onPlace(Polyp polyp, PlayerBlockPlaceEvent e) {
         if (e.isCancelled()) return; // a compat rule (reach / air) may cancel the placement
-        BlockSoundType st = e.getBlock().registry().getBlockSoundType();
+        BlockSoundType st = e.getBlock().blockSoundType();
         if (st == null || st.placeSound() == null) return;
         // vanilla BlockItem.place: volume (v+1)/2, pitch p*0.8, BLOCKS category
         emit(polyp, e.getPlayer(), st.placeSound(), Sound.Source.BLOCK, e.getBlockPosition(), (st.volume() + 1.0f) / 2.0f, st.pitch() * 0.8f);
@@ -71,8 +71,8 @@ public final class WorldSounds {
         if (p.getInstance() == null) return;
         // viewed world: on a virtual world the feet rest on the OVERLAY block, not the base map's
         Block below = MechanicsWorld.viewed(p).getBlock(at.withY(at.y() - 0.2));
-        if (below.isAir()) return;
-        BlockSoundType st = below.registry().getBlockSoundType();
+        if (below.air()) return;
+        BlockSoundType st = below.blockSoundType();
         if (st == null || st.stepSound() == null) return;
         // vanilla Entity.playStepSound: volume soundType.volume * 0.15, pitch soundType.pitch
         emit(polyp, p, st.stepSound(), Sound.Source.PLAYER, at, st.volume() * 0.15f, st.pitch());

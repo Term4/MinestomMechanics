@@ -98,7 +98,7 @@ public final class BlockBreaking {
     }
 
     /** Registry blast resistance - the modern value, correct for every block that still exists. */
-    public static final Resistance VANILLA_RESISTANCE = (block, ctx) -> block.registry().explosionResistance();
+    public static final Resistance VANILLA_RESISTANCE = (block, ctx) -> block.explosionResistance();
 
     // the only blocks whose blast resistance actually changed since 1.8 (148 of 155 match - see
     // docs/HANDOFF-explosion-block-breaking.md). moving_piston is not a typo: 1.8's c(-1.0F) never raises
