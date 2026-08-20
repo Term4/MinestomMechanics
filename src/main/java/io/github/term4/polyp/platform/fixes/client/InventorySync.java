@@ -11,6 +11,7 @@ import net.minestom.server.event.Event;
 import net.minestom.server.event.EventNode;
 import net.minestom.server.event.player.PlayerPacketEvent;
 import net.minestom.server.event.player.PlayerRespawnEvent;
+import net.minestom.server.event.player.PlayerSpawnEvent;
 import net.minestom.server.inventory.PlayerInventory;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.component.Equippable;
@@ -80,6 +81,19 @@ public final class InventorySync {
         // Minestom resends the inventory after every client-rebuild flow EXCEPT the death respawn - fill that gap
         // (the preceding RespawnPacket already forgot the mirror, so this update passes)
         node.addListener(PlayerRespawnEvent.class, e -> e.getPlayer().getInventory().update(e.getPlayer()));
+        // instance hops: a 1.8 client wipes on respawn, and Via can synthesize one the server never sent
+        // (same-dimension-id hops need its fake-switch trick) - the mirror can't certify anything across
+        // the hop, so forget and force a fresh full resend once the spawn settles
+        node.addListener(PlayerSpawnEvent.class, e -> {
+            if (e.isFirstSpawn() || !(e.getPlayer() instanceof OptimizedPlayer op)) return;
+            op.inventorySync().reset();
+            e.getPlayer().getInventory().update(e.getPlayer());
+        });
+    }
+
+    /** Forgets everything the mirror believed; the next full resend re-anchors it. */
+    void reset() {
+        synchronized (lock) { forget(); }
     }
 
     /** The client's believed slot contents, Minestom slot indexing (0-8 hotbar, 9-35 main, 36-40 craft, 41-44 armor, 45 offhand). */
