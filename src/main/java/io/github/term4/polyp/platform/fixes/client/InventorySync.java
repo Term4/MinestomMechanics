@@ -76,6 +76,8 @@ public final class InventorySync {
 
     /** Slot the client predicted outside the click model ({@link #onPredictedUse}), or -1. */
     private int unverifiedSlot = -1;
+    /** Container click landed: the player half may hold predictions the mirror can't model. */
+    private boolean containerTouched;
     private ItemStack believedCursor = ItemStack.AIR;
     /** Slots accumulated across a drag's start/add/end packets, mirroring Minestom's {@code ClickPreprocessor}. */
     private final Set<Integer> leftDrag = new LinkedHashSet<>();
@@ -89,6 +91,7 @@ public final class InventorySync {
         Arrays.fill(believed, ItemStack.AIR);
         believedCursor = ItemStack.AIR;
         unverifiedSlot = -1;
+        containerTouched = false;
         leftDrag.clear();
         rightDrag.clear();
     }
@@ -106,7 +109,12 @@ public final class InventorySync {
 
     /** Advances the mirror by the client's predicted result of {@code click} (player inventory only, supported modes). */
     void onClick(ClientClickWindowPacket click, boolean legacyClient) {
-        if (click.windowId() != 0) return; // container-window clicks use a different slot space; left to fall through
+        if (click.windowId() != 0) {
+            // container clicks spill into the player half in the window's own slot space; drop nothing
+            // until re-baselined, or a refused chest shift-click leaves a stuck ghost item
+            synchronized (lock) { containerTouched = true; }
+            return;
+        }
         synchronized (lock) { predict(click, legacyClient); }
     }
 
@@ -334,14 +342,14 @@ public final class InventorySync {
     private boolean reconcile(int slot, ItemStack item) {
         if (slot < 0 || slot >= believed.length) return true;
         if (slot == unverifiedSlot) unverifiedSlot = -1;
-        else if (item.equals(believed[slot])) return false;
+        else if (!containerTouched && item.equals(believed[slot])) return false;
         believed[slot] = item;
         return true;
     }
 
     /** Whether {@code packet} carries exactly what the mirror already holds - a redundant full resync safe to drop. */
     private boolean redundant(WindowItemsPacket packet) {
-        if (unverifiedSlot >= 0 || !packet.carriedItem().equals(believedCursor)) return false;
+        if (containerTouched || unverifiedSlot >= 0 || !packet.carriedItem().equals(believedCursor)) return false;
         final List<ItemStack> items = packet.items();
         for (int wire = 0; wire < items.size(); wire++) {
             final int slot = PlayerInventoryUtils.convertWindow0SlotToMinestomSlot(wire);
@@ -358,6 +366,7 @@ public final class InventorySync {
         }
         believedCursor = packet.carriedItem();
         unverifiedSlot = -1;
+        containerTouched = false;
     }
 
     // ------------------------------------------------------------------ helpers

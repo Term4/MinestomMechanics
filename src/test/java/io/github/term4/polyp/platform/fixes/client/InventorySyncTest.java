@@ -225,10 +225,17 @@ class InventorySyncTest extends HeadlessServerTest {
     }
 
     @Test
-    void containerWindowClickLeavesMirrorUntouched() {
+    void containerClicksDisableDroppingUntilRebaselined() {
         InventorySync sync = new InventorySync();
         assertNotNull(sync.filter(new SetPlayerInventorySlotPacket(0, APPLES)), "anchor hotbar 0");
-        sync.onClick(new ClientClickWindowPacket(3, 0, (short) 35, (byte) 0, ClickType.SWAP, Map.of(), airHash()), false);
-        assertNotNull(sync.filter(new SetPlayerInventorySlotPacket(0, ItemStack.AIR)), "no window-0 prediction, so the echo is a real change");
+        assertNull(sync.filter(new SetPlayerInventorySlotPacket(0, APPLES)), "match -> dropped");
+
+        // a chest shift-click changes the player half in ways the mirror can't model
+        sync.onClick(new ClientClickWindowPacket(3, 0, (short) 3, (byte) 0, ClickType.QUICK_MOVE, Map.of(), airHash()), true);
+        assertNotNull(sync.filter(new SetPlayerInventorySlotPacket(0, APPLES)), "identical contents SENT after a container click");
+
+        List<ItemStack> items = windowWithApples();
+        assertNotNull(sync.filter(new WindowItemsPacket(0, 0, items, ItemStack.AIR)), "the full resync passes and re-baselines");
+        assertNull(sync.filter(new SetPlayerInventorySlotPacket(0, APPLES)), "re-anchored: matches drop again");
     }
 }
