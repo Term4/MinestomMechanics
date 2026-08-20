@@ -9,6 +9,8 @@ import net.minestom.server.event.EventDispatcher;
 import net.minestom.server.event.ListenerHandle;
 import net.minestom.server.instance.block.Block;
 import net.minestom.server.instance.block.BlockSoundType;
+import net.minestom.server.network.packet.server.play.WorldEventPacket;
+import net.minestom.server.worldevent.WorldEvent;
 import net.minestom.server.network.packet.server.play.EntityAnimationPacket;
 import net.minestom.server.particle.Particle;
 import net.minestom.server.sound.SoundEvent;
@@ -71,6 +73,8 @@ public final class Fx {
     public static final Key STEP = Key.key("polyp:step");
     /** A block placement; the context detail is the placed {@code Block}. */
     public static final Key BLOCK_PLACE = Key.key("polyp:block_place");
+    /** A block break; the context detail is the broken {@code Block}. */
+    public static final Key BLOCK_BREAK = Key.key("polyp:block_break");
     /** The big explosion flash; played for power &gt;= 2 (the 1.8 client's hugeexplosion-vs-explode gate). */
     public static final Key EXPLOSION_EMITTER = Key.key("polyp:explosion_emitter");
 
@@ -143,6 +147,14 @@ public final class Fx {
                     BlockSoundType st = block != null ? block.blockSoundType() : null;
                     if (st == null || st.placeSound() == null) return;
                     ctx.predictedSound(st.placeSound(), Sound.Source.BLOCK, (st.volume() + 1.0f) / 2.0f, st.pitch() * 0.8f);
+                })
+                // world event 2001: the client derives sound + particles from the block id; both
+                // generations predict their own break, so viewers only
+                .register(BLOCK_BREAK, ctx -> {
+                    Block block = ctx.detail(Block.class);
+                    if (block == null || ctx.source() == null) return;
+                    ctx.source().sendPacketToViewers(new WorldEventPacket(
+                            WorldEvent.PARTICLES_DESTROY_BLOCK.id(), ctx.position(), block.stateId(), false));
                 });
     }
 

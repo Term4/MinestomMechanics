@@ -16,9 +16,10 @@ import net.minestom.server.tag.Tag;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Block place + footstep sounds Minestom doesn't emit, played through the {@link Fx} registry
- * ({@link Fx#STEP} / {@link Fx#BLOCK_PLACE}, the block as the context detail). Owns only the step
- * cadence and block resolution; look and audience live in the registered handlers.
+ * Place and footstep sounds Minestom doesn't emit, played through the {@link Fx} registry
+ * ({@link Fx#STEP} / {@link Fx#BLOCK_PLACE}, the block as the context detail). Owns only the cadence and
+ * block resolution; look and audience live in the registered handlers. Breaks are emitted by the world
+ * layer (the app's shard bridge routes them into {@link Fx#BLOCK_BREAK}).
  */
 public final class WorldSounds {
 
