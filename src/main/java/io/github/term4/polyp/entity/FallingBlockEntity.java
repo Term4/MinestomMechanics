@@ -50,7 +50,7 @@ public final class FallingBlockEntity extends Entity implements ExternallyTickab
 
     /** 1.8 {@code BlockFalling.canFallInto}: air, fire, or a liquid. */
     public static boolean canFallInto(@NotNull Block b) {
-        return b.isAir() || b.compare(Block.FIRE) || b.isLiquid();
+        return b.air() || b.compare(Block.FIRE) || b.liquid();
     }
 
     @Override
@@ -106,7 +106,7 @@ public final class FallingBlockEntity extends Entity implements ExternallyTickab
             world.setBlock(cell, block);
             world.applyPhysics(cell);
         } else {
-            Material material = block.registry().material();
+            Material material = block.material();
             if (material != null) {
                 DroppedItemEntity.spawn(world, new Pos(cell.blockX() + 0.5, cell.blockY() + 0.5, cell.blockZ() + 0.5),
                         Vec.ZERO, ItemStack.of(material), null, 10);
