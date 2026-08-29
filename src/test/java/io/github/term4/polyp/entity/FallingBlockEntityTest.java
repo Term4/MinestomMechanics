@@ -3,6 +3,7 @@ package io.github.term4.polyp.entity;
 import io.github.term4.polyp.testsupport.HeadlessServerTest;
 import io.github.term4.polyp.world.MechanicsWorld;
 import net.minestom.server.coordinate.Vec;
+import net.minestom.server.entity.Entity;
 import net.minestom.server.instance.block.Block;
 import org.junit.jupiter.api.Test;
 
@@ -48,7 +49,8 @@ class FallingBlockEntityTest extends HeadlessServerTest {
         settle(e);
 
         assertEquals(Block.TORCH, instance.getBlock(new Vec(10, 64, 40)), "torch survives");
-        assertTrue(instance.getEntities().stream().anyMatch(en -> en instanceof DroppedItemEntity),
-                "the sand dropped as an item");
+        var drops = instance.getEntities().stream().filter(en -> en instanceof DroppedItemEntity).toList();
+        assertTrue(!drops.isEmpty(), "the sand dropped as an item");
+        drops.forEach(Entity::remove); // shared instance: later tests scan its entities
     }
 }

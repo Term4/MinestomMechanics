@@ -33,7 +33,13 @@ import net.minestom.server.entity.LivingEntity;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.Event;
 import net.minestom.server.event.EventDispatcher;
+import io.github.term4.polyp.api.event.explosion.TntPrimeEvent;
+import io.github.term4.polyp.entity.PrimedTnt;
+import net.minestom.server.event.player.PlayerBlockPlaceEvent;
+import net.minestom.server.entity.GameMode;
+import net.minestom.server.item.ItemStack;
 import net.minestom.server.event.EventNode;
+import net.minestom.server.instance.block.Block;
 import net.minestom.server.instance.Explosion;
 import net.minestom.server.instance.ExplosionSupplier;
 import net.minestom.server.instance.Instance;
@@ -70,6 +76,23 @@ public final class ExplosionSystem implements MechanicsModule {
         this.config = config;
         this.services = polyp.services();
         this.node = EventNode.all("polyp:explosion");
+        // the Hypixel-BedWars/MineMen server behavior, per scope; the block never exists
+        node.addListener(PlayerBlockPlaceEvent.class, e -> {
+            if (!e.getBlock().compare(Block.TNT)) return;
+            Player p = e.getPlayer();
+            MechanicsWorld world = MechanicsWorld.of(p);
+            PrimedTnt.Config tnt = TntConfigResolver.resolve(polyp.profiles().resolve(p, MechanicsKeys.TNT),
+                    new TntConfigResolver.TntContext(p, world, TntPrimeEvent.Cause.PLACEMENT, services));
+            if (!tnt.igniteOnPlace()) return;
+            e.setCancelled(true);
+            PrimedTnt primed = PrimedTnt.spawn(this, world, e.getBlockPosition(), tnt, p,
+                    TntPrimeEvent.Cause.PLACEMENT);
+            if (primed == null) return;
+            if (p.getGameMode() != GameMode.CREATIVE) {
+                ItemStack held = p.getItemInHand(e.getHand());
+                p.setItemInHand(e.getHand(), held.withAmount(held.amount() - 1));
+            }
+        });
     }
 
     /** Per-player explosion: every player in the world gets the visual, those in range their own falloff knockback. */
@@ -108,7 +131,7 @@ public final class ExplosionSystem implements MechanicsModule {
         if (power >= 2.0f) Fx.play(services, Fx.EXPLOSION_EMITTER, FxContext.at(world, center, source));
         // AFTER the damage pass, per vanilla (ServerExplosion.explode: select -> hurtEntities -> interactWithBlocks)
         if (resolved.blockBreaking() != null && !event.blocks().isEmpty()) {
-            List<Point> broken = ExplosionBlocks.destroy(world, event.blocks(), power, resolved.blockBreaking());
+            List<Point> broken = ExplosionBlocks.destroy(world, event.blocks(), power, resolved.blockBreaking(), source);
             // BROKEN (Hypixel) lights only vacated cells; SELECTED (vanilla) may light any cell the blast reached
             if (resolved.fire()) ExplosionBlocks.placeFire(world,
                     resolved.fireScope() == ExplosionConfig.FireScope.BROKEN ? broken : event.blocks());

@@ -12,6 +12,7 @@ import io.github.term4.polyp.presets.vanilla18.Knockback;
 import io.github.term4.polyp.platform.compatibility.LegacyVelocityBridge;
 import io.github.term4.polyp.tracking.motion.LegacyVelocity;
 import io.github.term4.polyp.tracking.motion.MotionTracker;
+import io.github.term4.polyp.tracking.motion.VelocityRule;
 import net.kyori.adventure.key.Key;
 import net.minestom.server.ServerFlag;
 import net.minestom.server.coordinate.Vec;
@@ -129,6 +130,10 @@ public final class KnockbackSystem implements MechanicsModule {
     private void broadcast(Entity target, Vec velocity, KnockbackConfigResolver.ResolvedKnockbackConfig resolved, KnockbackSnapshot snap) {
         double tps = ServerFlag.SERVER_TICKS_PER_SECOND;
         KnockbackConfig.WireRule wire = resolved.wireRule();
+        if (wire == null) {
+            VelocityRule rule = profiles.resolve(target, MechanicsKeys.VELOCITY);
+            if (VelocityRule.wireFloored(rule)) wire = bt -> VelocityRule.wireFloor(rule, bt);
+        }
         // before the fold: the tracker must see what the client will receive
         if (wire != null) velocity = wire.apply(velocity.div(tps)).mul(tps);
         boolean quantize = resolved.quantizeVelocity();

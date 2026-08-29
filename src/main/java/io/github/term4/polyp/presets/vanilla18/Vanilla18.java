@@ -38,6 +38,7 @@ public final class Vanilla18 {
                 .set(MechanicsKeys.CONSUMABLES, Consumables.config())
                 .set(MechanicsKeys.BLOCKING, Blocking.config())
                 .set(MechanicsKeys.EXPLOSION, Explosion.config())
+                .set(MechanicsKeys.TNT, Tnt.config())
                 .set(MechanicsKeys.HUNGER, Hunger.config())
                 .set(MechanicsKeys.ITEMS, Items.registry())
                 .set(MechanicsKeys.FX, Fx.vanilla18())

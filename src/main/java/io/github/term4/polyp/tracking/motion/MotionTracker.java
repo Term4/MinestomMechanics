@@ -131,12 +131,12 @@ public final class MotionTracker implements Tracker {
     private record MotState(Vec motH, long sinceTick, boolean airborne) {}
 
     /**
-     * Ticked {@code motY} state. {@code clamped} = vanilla (0.005 apex reseed); {@code raw} = no reseed ({@code clampY(0)}
+     * Ticked {@code motY} state. {@code zeroed} = vanilla (0.005 apex reseed); {@code raw} = no reseed ({@code zeroBelowY(0)}
      * presets). Index {@code [0]} = latest end-of-tick; older slots back the {@code launchOffset} lookback.
      */
     private static final class VertSim {
         static final int HISTORY = 4;
-        final double[] clamped = new double[HISTORY];
+        final double[] zeroed = new double[HISTORY];
         final double[] raw = new double[HISTORY];
         /** Last {@code move()} probe clamped a descent - vanilla's collision {@code onGround}. */
         boolean collided;
@@ -183,7 +183,7 @@ public final class MotionTracker implements Tracker {
             if (!VelocityRule.motYOnMovePacketEnabled(profiles.resolve(p, MechanicsKeys.VELOCITY))) {
                 VertSim sim = p.getTag(VERT_SIM);
                 if (sim != null) {
-                    Arrays.fill(sim.clamped, 0);
+                    Arrays.fill(sim.zeroed, 0);
                     Arrays.fill(sim.raw, 0);
                     sim.collided = false;
                 }
@@ -265,7 +265,7 @@ public final class MotionTracker implements Tracker {
         VertSim sim = p.getTag(VERT_SIM);
         if (sim != null) {
             double seedY = jumpSeed(VelocityConfig.JUMP_VELOCITY, p.getEffectLevel(PotionEffect.JUMP_BOOST));
-            sim.clamped[0] = seedY;
+            sim.zeroed[0] = seedY;
             sim.raw[0] = seedY;
             sim.collided = false;
         }
@@ -291,7 +291,7 @@ public final class MotionTracker implements Tracker {
         if (s == null) return Vec.ZERO;
         int ticks = (int) Math.max(0, now - s.sinceTick());
         Vec decayed = s.motH().mul(Math.pow(TickScaler.dragPerTick(p, frictionPerTick(p, s.airborne())), ticks));
-        return new Vec(clampNearZero(decayed.x()), 0, clampNearZero(decayed.z()));
+        return new Vec(zeroBelow(decayed.x()), 0, zeroBelow(decayed.z()));
     }
 
     /** Both the {@code MOT_H} and entity-push residuals bleed by this. */
@@ -398,19 +398,19 @@ public final class MotionTracker implements Tracker {
         VertSim sim = p.getTag(VERT_SIM);
         if (sim == null) p.setTag(VERT_SIM, sim = new VertSim());
         if (p.isFlying() || p.getInstance() == null) {
-            shift(sim.clamped, 0);
+            shift(sim.zeroed, 0);
             shift(sim.raw, 0);
             sim.collided = p.isOnGround();
             return;
         }
         Aerodynamics aero = p.getAerodynamics();
         double g = aero.gravity(), s = aero.verticalAirResistance();
-        double c = sim.clamped[0], r = sim.raw[0];
+        double c = sim.zeroed[0], r = sim.raw[0];
 
-        if (env == Env.WEB) { shift(sim.clamped, 0); shift(sim.raw, 0); sim.collided = false; return; }
+        if (env == Env.WEB) { shift(sim.zeroed, 0); shift(sim.raw, 0); sim.collided = false; return; }
 
         // vanilla order: per-env start-of-tick adjust, then move() collides, then the per-env step
-        if (env == Env.NORMAL && Math.abs(c) < VelocityConfig.CLAMP) c = 0;
+        if (env == Env.NORMAL && Math.abs(c) < VelocityConfig.ZERO_BELOW) c = 0;
         if (env == Env.LADDER) {
             c = Math.max(-LADDER_CLAMP, c); r = Math.max(-LADDER_CLAMP, r);
             if (p.isSneaking()) { if (c < 0) c = 0; if (r < 0) r = 0; } // sneak-hold
@@ -437,13 +437,13 @@ public final class MotionTracker implements Tracker {
         }
         switch (env) {
             // swim is added BEFORE travel (bG() in m()), so it rides through the drag
-            case WATER -> { double wg = TickScaler.gravityPerTick(p, flowModel.waterGravity(p.isSprinting())); double k = fluidSwim(p, flowModel); double bump = TickScaler.impulse(p, LIQUID_EDGE_BUMP); double dr = TickScaler.dragPerTick(p, WATER_VERTICAL); boolean eb = edgeBump(p, clipped); shift(sim.clamped, eb ? bump : (c + k) * dr - wg); shift(sim.raw, eb ? bump : (r + k) * dr - wg); }
-            case LAVA  -> { double k = fluidSwim(p, flowModel); double bump = TickScaler.impulse(p, LIQUID_EDGE_BUMP); double dr = TickScaler.dragPerTick(p, LAVA_VERTICAL); double fg = TickScaler.gravityPerTick(p, FLUID_GRAVITY); boolean eb = edgeBump(p, clipped); shift(sim.clamped, eb ? bump : (c + k) * dr - fg); shift(sim.raw, eb ? bump : (r + k) * dr - fg); }
+            case WATER -> { double wg = TickScaler.gravityPerTick(p, flowModel.waterGravity(p.isSprinting())); double k = fluidSwim(p, flowModel); double bump = TickScaler.impulse(p, LIQUID_EDGE_BUMP); double dr = TickScaler.dragPerTick(p, WATER_VERTICAL); boolean eb = edgeBump(p, clipped); shift(sim.zeroed, eb ? bump : (c + k) * dr - wg); shift(sim.raw, eb ? bump : (r + k) * dr - wg); }
+            case LAVA  -> { double k = fluidSwim(p, flowModel); double bump = TickScaler.impulse(p, LIQUID_EDGE_BUMP); double dr = TickScaler.dragPerTick(p, LAVA_VERTICAL); double fg = TickScaler.gravityPerTick(p, FLUID_GRAVITY); boolean eb = edgeBump(p, clipped); shift(sim.zeroed, eb ? bump : (c + k) * dr - fg); shift(sim.raw, eb ? bump : (r + k) * dr - fg); }
             // water drag, then the column drag toward its cap
-            case BUBBLE -> { double wg = TickScaler.gravityPerTick(p, flowModel.waterGravity(p.isSprinting())); double dr = TickScaler.dragPerTick(p, WATER_VERTICAL); boolean dn = bubbleDown(p); shift(sim.clamped, bubbleStep(p, c * dr - wg, dn)); shift(sim.raw, bubbleStep(p, r * dr - wg, dn)); }
+            case BUBBLE -> { double wg = TickScaler.gravityPerTick(p, flowModel.waterGravity(p.isSprinting())); double dr = TickScaler.dragPerTick(p, WATER_VERTICAL); boolean dn = bubbleDown(p); shift(sim.zeroed, bubbleStep(p, c * dr - wg, dn)); shift(sim.raw, bubbleStep(p, r * dr - wg, dn)); }
             // floor a descent at the slide speed
-            case HONEY -> { double slide = TickScaler.impulse(p, HONEY_SLIDE); shift(sim.clamped, Math.max(airStep(p, c, g, s), slide)); shift(sim.raw, Math.max(airStep(p, r, g, s), slide)); }
-            default    -> { shift(sim.clamped, airStep(p, c, g, s)); shift(sim.raw, airStep(p, r, g, s)); } // normal + ladder
+            case HONEY -> { double slide = TickScaler.impulse(p, HONEY_SLIDE); shift(sim.zeroed, Math.max(airStep(p, c, g, s), slide)); shift(sim.raw, Math.max(airStep(p, r, g, s), slide)); }
+            default    -> { shift(sim.zeroed, airStep(p, c, g, s)); shift(sim.raw, airStep(p, r, g, s)); } // normal + ladder
         }
         sim.collided = collidedC;
     }
@@ -582,9 +582,9 @@ public final class MotionTracker implements Tracker {
         return Math.max(-limit, Math.min(limit, v));
     }
 
-    /** Vanilla {@code m()} near-zero clamp: zeroes one component whose magnitude is below {@link VelocityConfig#CLAMP}. */
-    private static double clampNearZero(double v) {
-        return Math.abs(v) < VelocityConfig.CLAMP ? 0.0 : v;
+    /** Vanilla {@code m()}: zeroes a component whose magnitude is below {@link VelocityConfig#ZERO_BELOW}. */
+    private static double zeroBelow(double v) {
+        return Math.abs(v) < VelocityConfig.ZERO_BELOW ? 0.0 : v;
     }
 
     private static void shift(double[] h, double v) {
@@ -605,7 +605,7 @@ public final class MotionTracker implements Tracker {
         p.removeTag(FLOW_PUSH);
         VertSim sim = p.getTag(VERT_SIM);
         if (sim == null) p.setTag(VERT_SIM, sim = new VertSim());
-        sim.clamped[0] = bt.y();
+        sim.zeroed[0] = bt.y();
         sim.raw[0] = bt.y();
         sim.collided = false;
         if (bt.y() > 0) p.setTag(LAUNCHED, true);
@@ -618,13 +618,13 @@ public final class MotionTracker implements Tracker {
         return sim != null && sim.collided;
     }
 
-    /** {@code lookback} reads that many end-of-tick values back; {@code clamped} picks the apex-reseed variant. */
-    public static @Nullable Double serverMotY(Entity entity, int lookback, boolean clamped) {
+    /** {@code lookback} reads that many end-of-tick values back; {@code zeroed} picks the apex-reseed variant. */
+    public static @Nullable Double serverMotY(Entity entity, int lookback, boolean zeroed) {
         if (!(entity instanceof Player p)) return null;
         VertSim sim = p.getTag(VERT_SIM);
         if (sim == null) return null;
         int i = Math.min(Math.max(lookback, 0), VertSim.HISTORY - 1);
-        return clamped ? sim.clamped[i] : sim.raw[i];
+        return zeroed ? sim.zeroed[i] : sim.raw[i];
     }
 
     // entity push residual
@@ -657,7 +657,7 @@ public final class MotionTracker implements Tracker {
     private static Vec bleed(Player p, Vec acc) {
         if (acc.isZero()) return acc;
         Vec decayed = acc.mul(frictionPerTick(p, !p.isOnGround()));
-        return new Vec(clampNearZero(decayed.x()), clampNearZero(decayed.y()), clampNearZero(decayed.z()));
+        return new Vec(zeroBelow(decayed.x()), zeroBelow(decayed.y()), zeroBelow(decayed.z()));
     }
 
     /** Vanilla {@code Entity.collide} from every overlapping living entity. */
@@ -831,7 +831,7 @@ public final class MotionTracker implements Tracker {
     /** The ticked sim's latest value, else the analytic gravity arc. Unlike {@link #positionDelta} it keeps accelerating, so a high-ping fall is probed at the depth vanilla sees. */
     private static double serverSimMotY(Player p, double g, double s) {
         VertSim sim = p.getTag(VERT_SIM);
-        if (sim != null) return sim.clamped[0];
+        if (sim != null) return sim.zeroed[0];
         int air = ticksInAir(p);
         double vy = launched(p) ? VelocityConfig.JUMP_VELOCITY : 0.0;
         // air is in server ticks, so step with TPS-scaled gravity/drag to match the sim

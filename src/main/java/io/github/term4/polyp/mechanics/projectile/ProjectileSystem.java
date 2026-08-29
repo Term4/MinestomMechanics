@@ -263,7 +263,6 @@ public final class ProjectileSystem implements MechanicsModule {
         entity.setPhysicsOrder(flight.physicsOrder());
         entity.setLeftOwnerImmunity(flight.leftOwnerImmunity());
         entity.setStickPullback(flight.stickPullback());
-        entity.setWireMotYFloor(flight.wireMotYFloor());
         if (entity instanceof ManagedProjectile mp) {
             mp.setBehavior(snap.behavior() != null ? snap.behavior() : flight.behavior());
         }

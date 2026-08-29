@@ -33,6 +33,8 @@ public final class Vri implements MechanicsModule {
 
     public VriConfig config() { return config; }
 
+    Polyp polyp() { return polyp; }
+
     /** Effective config for {@code subject}: the scoped profile, else the install config. */
     public VriConfig configFor(@Nullable Entity subject) {
         return polyp.profiles().resolveOr(subject, MechanicsKeys.VRI, config);
@@ -50,6 +52,7 @@ public final class Vri implements MechanicsModule {
         ItemPickup.install(system.node, system);
         ItemDrop.install(system.node, system);
         FireBreaks.install(system.node, system);
+        TntIgnite.install(system.node, system);
         polyp.register(system);
         polyp.install(system.node);
         return system;
