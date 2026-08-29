@@ -1,5 +1,6 @@
 package io.github.term4.polyp.mechanics.projectile;
 
+import io.github.term4.polyp.codegen.CheckResolveOrder;
 import io.github.term4.polyp.Services;
 import io.github.term4.polyp.config.Config;
 import io.github.term4.polyp.config.FieldValue;
@@ -18,6 +19,8 @@ import org.jetbrains.annotations.Nullable;
  * (spawn + physics) and {@link #resolveHit} at impact (hit knobs, against a context with the struck target + throw
  * origin). The merged {@link ProjectileTypeConfig} is computed once at launch and reused for impact.
  */
+
+@CheckResolveOrder
 public final class ProjectileConfigResolver {
 
     private ProjectileConfigResolver() {}

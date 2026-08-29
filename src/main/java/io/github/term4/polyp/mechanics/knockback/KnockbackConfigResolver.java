@@ -1,5 +1,6 @@
 package io.github.term4.polyp.mechanics.knockback;
 
+import io.github.term4.polyp.codegen.CheckResolveOrder;
 import io.github.term4.polyp.MechanicsKeys;
 import io.github.term4.polyp.Services;
 import io.github.term4.polyp.config.FieldValue;
@@ -16,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /** Resolves KnockbackConfig with context into plain values. */
+
+@CheckResolveOrder
 public final class KnockbackConfigResolver {
 
     private KnockbackConfigResolver() {}
