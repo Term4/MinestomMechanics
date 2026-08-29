@@ -4,9 +4,11 @@ import io.github.term4.polyp.mechanics.attribute.AttributeSystem;
 import io.github.term4.polyp.mechanics.attribute.catalog.enchant.Sharpness;
 import io.github.term4.polyp.mechanics.consumable.ConsumableSystem;
 import io.github.term4.polyp.mechanics.projectile.ProjectileSystem;
+import io.github.term4.polyp.mechanics.projectile.types.Snowball;
 import io.github.term4.polyp.presets.Preset;
 import io.github.term4.polyp.testsupport.FakePlayer;
 import io.github.term4.polyp.testsupport.HeadlessServerTest;
+import io.github.term4.polyp.world.MechanicsWorld;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.entity.EntityType;
 import net.minestom.server.entity.LivingEntity;
@@ -34,13 +36,14 @@ class ScopedProfileIdentityTest extends HeadlessServerTest {
     private static InstanceContainer arena;
     private static InstanceContainer plain;
     private static AttributeSystem bareAttributes;
+    private static ProjectileSystem projectiles;
 
     @BeforeAll
     static void bareInstallsAndScopedArena() {
         polyp.unregister(AttributeSystem.class);
         bareAttributes = AttributeSystem.install(polyp);
         ConsumableSystem.install(polyp);
-        ProjectileSystem.install(polyp);
+        projectiles = ProjectileSystem.install(polyp);
         arena = flatInstance(Preset.HYPIXEL.profile());
         plain = flatInstance(null);
     }
@@ -97,6 +100,42 @@ class ScopedProfileIdentityTest extends HeadlessServerTest {
         var dud = new PlayerUseItemEvent(parched.player, PlayerHand.MAIN, ItemStack.of(Material.POTION), 999);
         EventDispatcher.call(dud);
         assertEquals(999, dud.getItemUseTime(), "no identity anywhere: the use passes through untouched");
+    }
+
+    /** The player hop: a per-player profile arms identities for that player alone. */
+    @Test
+    void playerProfileSuppliesTheScopeForThatPlayerAlone() {
+        FakePlayer chosen = FakePlayer.connect(plain, new Pos(7.5, 65, 12.5), "ChosenOne");
+        FakePlayer neighbor = FakePlayer.connect(plain, new Pos(9.5, 65, 12.5), "Neighbor");
+        polyp.profiles().setPlayer(chosen.player, Preset.HYPIXEL.profile());
+
+        assertTrue(projectiles.armed(Snowball.KEY, chosen.player), "the player profile arms the type");
+        assertFalse(projectiles.armed(Snowball.KEY, neighbor.player), "the neighbor in the same instance stays bare");
+
+        var use = new PlayerUseItemEvent(chosen.player, PlayerHand.MAIN, ItemStack.of(Material.POTION), 999);
+        EventDispatcher.call(use);
+        assertNotEquals(999, use.getItemUseTime(), "consumable types resolve from the player profile");
+
+        polyp.profiles().setPlayer(chosen.player, null);
+        assertFalse(projectiles.armed(Snowball.KEY, chosen.player), "clearing the profile disarms");
+    }
+
+    /** The world hop: a virtual-world binding (a shard) supplies the profile even when the instance has none. */
+    @Test
+    void worldBindingSuppliesTheScopeAboveTheInstance() {
+        MechanicsWorld game = MechanicsWorld.of(flatInstance(null));
+        polyp.profiles().setWorld(game, Preset.HYPIXEL.profile());
+
+        FakePlayer bound = FakePlayer.connect(plain, new Pos(7.5, 65, 7.5), "WorldBound");
+        bound.player.setTag(MechanicsWorld.ENTITY_TAG, game);
+        assertTrue(projectiles.armed(Snowball.KEY, bound.player), "the binding's profile arms the type");
+
+        var use = new PlayerUseItemEvent(bound.player, PlayerHand.MAIN, ItemStack.of(Material.POTION), 999);
+        EventDispatcher.call(use);
+        assertNotEquals(999, use.getItemUseTime(), "consumable types resolve through the binding too");
+
+        bound.player.removeTag(MechanicsWorld.ENTITY_TAG);
+        assertFalse(projectiles.armed(Snowball.KEY, bound.player), "unbound falls back to the bare instance");
     }
 
     @Test
