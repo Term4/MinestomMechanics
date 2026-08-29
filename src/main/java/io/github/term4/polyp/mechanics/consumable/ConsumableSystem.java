@@ -85,10 +85,12 @@ public final class ConsumableSystem implements MechanicsModule {
         return polyp.profiles().resolveOr(subject, MechanicsKeys.CONSUMABLES, config);
     }
 
-    /** {@code null} if the item is neither a registered consumable nor a component food. */
+    /** {@code null} if the item is neither a scoped/registered consumable nor a component food. */
     private @Nullable Resolution resolve(Player player, PlayerHand hand, ItemStack item) {
         ConsumableConfig cfg = configFor(player);
-        Consumable c = registry.forMaterial(item.material());
+        // scoped types first: a profile needs no install registration
+        Consumable c = cfg.typeForMaterial(item.material());
+        if (c == null) c = registry.forMaterial(item.material());
         if (c == null) {
             if (Boolean.FALSE.equals(cfg.componentFoods()) || item.get(DataComponents.FOOD) == null) return null;
             c = ComponentFood.TYPE;
@@ -215,7 +217,7 @@ public final class ConsumableSystem implements MechanicsModule {
         Fx.play(services, sound, FxContext.of(r.ctx.user()));
     }
 
-    /** Installs reading the GLOBAL profile's {@link ConsumableConfig}: its {@code types} (the consumable identities) register up front. Set the profile before installing. */
+    /** Installs from the GLOBAL profile's {@link ConsumableConfig} if set; scoped profiles resolve their own {@code types} either way. */
     public static ConsumableSystem install(Polyp polyp) {
         ConsumableConfig global = polyp.profiles().resolve(null, MechanicsKeys.CONSUMABLES);
         return install(polyp, global != null ? global : ConsumableConfig.builder().build());

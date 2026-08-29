@@ -28,9 +28,7 @@ final class UseItemAimSync {
 
     private @Nullable ClientUseItemPacket held;
     private long heldAt;
-    // use packets this interceptor already released. Anything re-entering the queue (a lag/replay tool re-feeding
-    // via addPacketToQueue) must pass untouched: holding it again swaps the instance per flying packet, and a
-    // re-feeder tracking instances by identity then treats every cycle as a fresh use - the press never lands
+    // re-held re-feeds get a fresh instance per flying packet; an identity-tracking re-feeder (lag sim) then never passes the use
     private final ClientPacket[] emitted = new ClientPacket[4];
     private int emittedIndex;
 

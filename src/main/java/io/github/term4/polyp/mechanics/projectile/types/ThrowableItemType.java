@@ -71,6 +71,7 @@ public abstract class ThrowableItemType extends ProjectileType {
 
     private void throwItem(Player p, PlayerHand hand, ItemStack item) {
         if (item.material() != material || system == null) return;
+        if (!system.armed(key(), p)) return;
         Instance instance = p.getInstance();
         long age = instance != null ? MechanicsWorld.of(p).worldAge() : 0;
         Long last = p.getTag(LAST_THROW_AGE);

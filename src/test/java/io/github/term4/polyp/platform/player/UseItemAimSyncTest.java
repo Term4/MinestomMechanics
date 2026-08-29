@@ -86,9 +86,7 @@ class UseItemAimSyncTest {
         assertEquals(List.of(USE, swing), out);
     }
 
-    // a lag/replay tool re-feeds queue packets through addPacketToQueue; a released use re-entering must pass
-    // untouched. Holding it again swaps the instance per flying packet, and an identity-tracking re-feeder then
-    // sees every cycle as a fresh use - the press only lands on a timeout while its release sails past it
+    // re-holding a re-fed instance swaps it per flying packet; an identity-tracking re-feeder (lag sim) then never lands the press
 
     @Test
     void reFedPatchedUseIsNotHeldAgain() {
