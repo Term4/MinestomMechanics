@@ -240,4 +240,12 @@ public final class BlockContact {
     public static boolean isPassable(Block block) {
         return !block.blocksMotion();
     }
+
+    /**
+     * Blocks 1.8 places with no entity check: no collision box skips it outright, and stairs' stale raytrace
+     * bounds ({@code hasRaytraced} never resets) reduce it to a corner sliver.
+     */
+    public static boolean legacyPlacementCheckExempt(Block block) {
+        return isPassable(block) || block.name().endsWith("_stairs");
+    }
 }

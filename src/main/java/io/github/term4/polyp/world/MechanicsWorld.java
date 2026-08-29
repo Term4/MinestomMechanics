@@ -193,6 +193,12 @@ public interface MechanicsWorld extends Block.Getter, ForwardingAudience, Taggab
 
     void setBlock(@NotNull Point pos, @NotNull Block block);
 
+    /**
+     * 1.8 neighbor physics for a gameplay change at {@code pos}. Instance worlds no-op - their {@code setBlock}
+     * already chains the base pipeline's rule updates; virtual worlds override.
+     */
+    default void applyPhysics(@NotNull Point pos) {}
+
     /** One batch; a virtual world groups the client updates per section. */
     default void setBlocks(@NotNull Map<Point, Block> blocks) {
         blocks.forEach(this::setBlock);

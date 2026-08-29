@@ -284,6 +284,7 @@ final class ExplosionBlocks {
                 }
             }
             world.setBlock(pos, Block.AIR);
+            world.applyPhysics(pos);
             broken.add(pos);
         }
         // fire the blast left unsupported: vanilla's neighbor updates; Minestom runs none
@@ -305,6 +306,7 @@ final class ExplosionBlocks {
             if (!world.getBlock(pos).air()) continue;
             if (!world.getBlock(pos.sub(0, 1, 0)).solid()) continue;
             world.setBlock(pos, Block.FIRE);
+            world.applyPhysics(pos);
         }
     }
 

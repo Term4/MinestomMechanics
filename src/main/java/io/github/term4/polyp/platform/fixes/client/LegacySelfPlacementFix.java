@@ -12,10 +12,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.BiConsumer;
 
 /**
- * 1.8 self-placement: vanilla 1.8 excludes the placer from the placement collision check (place a ladder into your own
- * body); Minestom doesn't, so the block desyncs. Arms {@link OptimizedPlayer#setSelfPlacing} per placement - the placer
- * only, and only for PASSABLE blocks (stricter than 1.8: a motion-blocking block into your own hitbox is never a legit
- * clutch). Wraps the stock listener; an app that replaces the placement listener re-installs with it as the delegate, LAST.
+ * 1.8 self-placement: 1.8 skips the placement entity check for no-collision-box blocks and (via stale raytrace
+ * bounds) stairs; Minestom checks them all, so the block desyncs. Arms {@link OptimizedPlayer#setSelfPlacing}
+ * per placement for {@link BlockContact#legacyPlacementCheckExempt} blocks - the placer only here; the shard
+ * router skips its whole check. Wraps the stock listener; an app that replaces the placement listener
+ * re-installs with it as the delegate, LAST.
  */
 public final class LegacySelfPlacementFix {
 
@@ -53,6 +54,6 @@ public final class LegacySelfPlacementFix {
 
     /** The null guard is required: a non-block item right-clicking a block has a {@code null} {@link Material#block()}. */
     private static boolean excludesPlacer(Material m) {
-        return m.block() != null && BlockContact.isPassable(m.block());
+        return m.block() != null && BlockContact.legacyPlacementCheckExempt(m.block());
     }
 }

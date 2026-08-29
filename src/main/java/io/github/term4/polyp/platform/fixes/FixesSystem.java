@@ -80,6 +80,7 @@ public final class FixesSystem implements MechanicsModule {
         LegacyPlacementGhostFix.install(system.node);
         LegacyUseOnBlockFix.install(system.node);
         UseItemInterruptFix.install(system.node);
+        BlockUpdateOrderFix.install();
         // Below ride server-wide listeners / send overrides, so they gate on the install config and cannot vary per scope.
         // Self-placement wraps the STOCK placement listener; an app that replaces that listener re-installs LAST with
         // its own as the delegate.
