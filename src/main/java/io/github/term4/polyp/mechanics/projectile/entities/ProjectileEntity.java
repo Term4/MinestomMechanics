@@ -1,7 +1,7 @@
 package io.github.term4.polyp.mechanics.projectile.entities;
 
 import io.github.term4.polyp.Polyp;
-import io.github.term4.polyp.world.ExternallyTickable;
+import io.github.term4.polyp.entity.MechanicsEntity;
 import io.github.term4.polyp.world.MechanicsWorld;
 import io.github.term4.polyp.world.WorldPolicy;
 import io.github.term4.polyp.mechanics.projectile.types.ProjectileTypeConfig;
@@ -53,17 +53,7 @@ import java.util.Collection;
  * self-heals; modern clients hold via {@code inGround} metadata. Velocity is b/t internally ({@code super.velocity}
  * mirrors b/s); {@link Aerodynamics} constants are read live.
  */
-public abstract class ProjectileEntity extends Entity implements ExternallyTickable {
-
-    // @ApiStatus.Internal override: super is exactly this field write + dispatcher().updateElement (verified
-    // 26.2, re-verify on bumps) - an externally ticked entity in the global dispatcher double-ticks
-    @Override protected void refreshCurrentChunk(@NotNull net.minestom.server.instance.Chunk chunk) {
-        if (MechanicsWorld.externallyTicked(this)) {
-            currentChunk = chunk;
-            return;
-        }
-        super.refreshCurrentChunk(chunk);
-    }
+public abstract class ProjectileEntity extends MechanicsEntity {
 
     public static final int DEFAULT_SHOOTER_IMMUNITY_TICKS = 5;
 

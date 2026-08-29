@@ -53,4 +53,26 @@ class FallingBlockEntityTest extends HeadlessServerTest {
         assertTrue(!drops.isEmpty(), "the sand dropped as an item");
         drops.forEach(Entity::remove); // shared instance: later tests scan its entities
     }
+
+    @Test
+    void copyAndSaveCarryTheFallInProgress() {
+        MechanicsWorld world = MechanicsWorld.of(instance);
+        Vec origin = new Vec(12, 70, 40);
+        instance.setBlock(origin, Block.SAND);
+        FallingBlockEntity e = FallingBlockEntity.spawn(world, origin, Block.SAND);
+        awaitSpawn(e);
+        for (int i = 0; i < 3; i++) e.tick(TimeUnit.NANOSECONDS.toMillis(System.nanoTime()));
+
+        FallingBlockEntity copy = (FallingBlockEntity) e.getTag(MechanicsWorld.ENTITY_COPY).get();
+        assertTrue(copy != e && !copy.isRemoved(), "fresh unspawned twin");
+
+        var saved = e.getTag(MechanicsWorld.ENTITY_SAVE).get();
+        assertEquals("polyp:falling_block", saved.getString("id"));
+        assertTrue(saved.getInt("fallTime") > 0, "a mid-fall save keeps its clock, so the twin never re-clears the origin");
+        FallingBlockEntity revived = FallingBlockEntity.fromSave(saved);
+        assertTrue(!revived.isRemoved(), "revivable");
+
+        e.remove();
+        instance.setBlock(origin, Block.AIR);
+    }
 }

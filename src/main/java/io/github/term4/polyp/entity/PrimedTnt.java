@@ -11,18 +11,14 @@ import io.github.term4.polyp.mechanics.projectile.entities.ProjectileEntity;
 import io.github.term4.polyp.platform.player.OptimizedPlayer;
 import io.github.term4.polyp.tracking.motion.VelocityRule;
 import io.github.term4.polyp.util.tick.TickScaler;
-import io.github.term4.polyp.world.ExternallyTickable;
 import io.github.term4.polyp.world.MechanicsWorld;
-import net.minestom.server.instance.Chunk;
 import net.kyori.adventure.nbt.BinaryTagTypes;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.DoubleBinaryTag;
 import net.kyori.adventure.nbt.ListBinaryTag;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.event.EventDispatcher;
-import net.minestom.server.ServerFlag;
 import net.minestom.server.collision.Aerodynamics;
-import net.minestom.server.collision.PhysicsResult;
 import net.minestom.server.coordinate.Point;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.coordinate.Vec;
@@ -46,7 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * motY×-0.5 bounce). {@link Config} carries the preset knobs; the wire is hand-sent per {@link Wire}; a TNT source's
  * push on other TNT rescales per {@code tntVictimScale} ({@link #retuneTntVictims}).
  */
-public final class PrimedTnt extends Entity implements ExternallyTickable {
+public final class PrimedTnt extends MechanicsEntity {
 
     /**
      * {@code detonateAtFeet}: MineMen/Hypixel at the feet, vanilla at {@code +height/16}. {@code bounce}: the motY×-0.5
@@ -81,7 +77,6 @@ public final class PrimedTnt extends Entity implements ExternallyTickable {
     }
     private static final int LEGACY_SELF_FUSE = 80; // a 1.8 client counts this many ticks itself and setDead()s at zero
     private static final int LEGACY_REARM_INTERVAL = 60; // re-send the spawn under that window to restart the count
-    private static final double TPS = ServerFlag.SERVER_TICKS_PER_SECOND;
     private static final AtomicBoolean RETUNE_INSTALLED = new AtomicBoolean();
 
     private final ExplosionSystem explosion;
@@ -252,30 +247,13 @@ public final class PrimedTnt extends Entity implements ExternallyTickable {
             super.setVelocity(velocity);
             rawBroadcast = false;
         }
-        this.velocity = moveVector();
+        this.velocity = gravityLeadVector(motion);
     }
 
     /** Vanilla motY state (the wire-visible value), not the Minestom move vector. */
     @Override
     public @NotNull Vec getVelocity() {
         return motion.mul(TPS);
-    }
-
-    private PhysicsResult lastPhysics;
-
-    // an externally ticked TNT in the global dispatcher double-ticks: skip the field write's re-registration
-    @Override protected void refreshCurrentChunk(@NotNull Chunk chunk) {
-        if (MechanicsWorld.externallyTicked(this)) {
-            currentChunk = chunk;
-            return;
-        }
-        super.refreshCurrentChunk(chunk);
-    }
-
-    // bail on a foreign clock, or the fuse counts on both and detonates early (movementTick + update ride super.tick)
-    @Override public void tick(long time) {
-        if (!MechanicsWorld.ownsCurrentTick(this)) return;
-        super.tick(time);
     }
 
     @Override
@@ -285,18 +263,9 @@ public final class PrimedTnt extends Entity implements ExternallyTickable {
         if (spawnVelocityPendingScale) { // first tick with a resolvable scope, before the physics step
             spawnVelocityPendingScale = false;
             motion = TickScaler.fromClientVelocity(this, motion);
-            this.velocity = moveVector();
+            this.velocity = gravityLeadVector(motion);
         }
-        this.lastPhysics = MechanicsWorld.step(this, velocity.div(TPS), lastPhysics, result -> {
-            this.velocity = result.newVelocity().mul(TPS);
-            this.onGround = result.isOnGround();
-            refreshPosition(result.newPosition(), true, false); // TNT is a synchronize-only type: the wire is hand-sent
-        });
-    }
-
-    // vanilla applies gravity BEFORE the move; handing Minestom the raw motion over-shoots the hop apex (+0.577 vs +0.386)
-    private Vec moveVector() {
-        return motion.sub(0, TickScaler.aerodynamics(this, getAerodynamics()).gravity(), 0).mul(TPS);
+        stepAgainstWorld();
     }
 
     @Override
@@ -309,7 +278,7 @@ public final class PrimedTnt extends Entity implements ExternallyTickable {
         flipPending = false;
         double hDrag = aero.horizontalAirResistance() * friction;
         motion = new Vec(motion.x() * hDrag, vy, motion.z() * hDrag);
-        this.velocity = moveVector();
+        this.velocity = gravityLeadVector(motion);
 
         if (wireSyncedAt == null) wireSyncedAt = getPosition(); // a revived twin skips spawn()'s wire init
         if (pushed) { // vanilla broadcasts a blast impulse post-friction (its tracker phase), replacing this tick's cadence send
