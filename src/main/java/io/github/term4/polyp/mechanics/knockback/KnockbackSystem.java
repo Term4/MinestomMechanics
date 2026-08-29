@@ -124,6 +124,8 @@ public final class KnockbackSystem extends ScopedSystem<KnockbackConfig> {
         double tps = ServerFlag.SERVER_TICKS_PER_SECOND;
         KnockbackConfig.WireRule wire = resolved.wireRule();
         if (wire == null) {
+            // scope-only, NOT the effectiveVelocity chain: the floor is the victim network's tracker law, so a
+            // config-pinned estimate rule must not shadow it
             VelocityRule rule = profiles.resolve(target, MechanicsKeys.VELOCITY);
             if (VelocityRule.wireFloored(rule)) wire = bt -> VelocityRule.wireFloor(rule, bt);
         }

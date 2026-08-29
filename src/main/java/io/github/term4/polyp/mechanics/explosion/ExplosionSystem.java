@@ -1,5 +1,6 @@
 package io.github.term4.polyp.mechanics.explosion;
 
+import io.github.term4.polyp.util.HeldItems;
 import io.github.term4.polyp.MechanicsKeys;
 import io.github.term4.polyp.MechanicsModule;
 import io.github.term4.polyp.Polyp;
@@ -36,8 +37,6 @@ import net.minestom.server.event.EventDispatcher;
 import io.github.term4.polyp.api.event.explosion.TntPrimeEvent;
 import io.github.term4.polyp.entity.PrimedTnt;
 import net.minestom.server.event.player.PlayerBlockPlaceEvent;
-import net.minestom.server.entity.GameMode;
-import net.minestom.server.item.ItemStack;
 import net.minestom.server.event.EventNode;
 import net.minestom.server.instance.block.Block;
 import net.minestom.server.instance.Explosion;
@@ -81,18 +80,33 @@ public final class ExplosionSystem implements MechanicsModule {
             if (!e.getBlock().compare(Block.TNT)) return;
             Player p = e.getPlayer();
             MechanicsWorld world = MechanicsWorld.of(p);
-            PrimedTnt.Config tnt = TntConfigResolver.resolve(polyp.profiles().resolve(p, MechanicsKeys.TNT),
-                    new TntConfigResolver.TntContext(p, world, TntPrimeEvent.Cause.PLACEMENT, services));
+            PrimedTnt.Config tnt = resolveTnt(p, world, TntPrimeEvent.Cause.PLACEMENT);
             if (!tnt.igniteOnPlace()) return;
             e.setCancelled(true);
             PrimedTnt primed = PrimedTnt.spawn(this, world, e.getBlockPosition(), tnt, p,
                     TntPrimeEvent.Cause.PLACEMENT);
             if (primed == null) return;
-            if (p.getGameMode() != GameMode.CREATIVE) {
-                ItemStack held = p.getItemInHand(e.getHand());
-                p.setItemInHand(e.getHand(), held.withAmount(held.amount() - 1));
-            }
+            HeldItems.consumeOne(p, e.getHand());
         });
+    }
+
+    /** The scope-resolved TNT knobs for one prime: {@code igniter}'s chain when present, else the world's. */
+    public PrimedTnt.Config resolveTnt(@Nullable Entity igniter, MechanicsWorld world, TntPrimeEvent.Cause cause) {
+        TntConfig cfg = igniter != null ? services.profiles().resolve(igniter, MechanicsKeys.TNT)
+                : services.profiles().resolveWorld(world, MechanicsKeys.TNT);
+        return TntConfigResolver.resolve(cfg, new TntConfigResolver.TntContext(igniter, world, cause, services));
+    }
+
+    /**
+     * Scope-resolved prime at {@code pos}: converts a TNT block sitting there, else a blockless spawn. The default
+     * entry point; explicit-config control stays on {@link PrimedTnt#spawn}/{@link PrimedTnt#ignite}.
+     */
+    public @Nullable PrimedTnt primeTnt(MechanicsWorld world, Point pos, @Nullable Entity igniter,
+                                        TntPrimeEvent.Cause cause) {
+        PrimedTnt.Config cfg = resolveTnt(igniter, world, cause);
+        return world.getBlock(pos).compare(Block.TNT)
+                ? PrimedTnt.ignite(this, world, pos, cfg, igniter, cause)
+                : PrimedTnt.spawn(this, world, pos, cfg, igniter, cause);
     }
 
     /** Per-player explosion: every player in the world gets the visual, those in range their own falloff knockback. */

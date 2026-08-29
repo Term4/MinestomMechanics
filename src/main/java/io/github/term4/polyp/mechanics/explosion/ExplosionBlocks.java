@@ -309,9 +309,9 @@ final class ExplosionBlocks {
         ExplosionSystem explosions = polyp.isInitialized() ? polyp.module(ExplosionSystem.class) : null;
         if (explosions == null) return;
         Entity igniter = source instanceof PrimedTnt tnt && tnt.igniter() != null ? tnt.igniter() : source;
-        PrimedTnt.Config base = TntConfigResolver.resolve(
-                polyp.profiles().resolveWorld(world, MechanicsKeys.TNT),
-                new TntConfigResolver.TntContext(igniter, world, TntPrimeEvent.Cause.EXPLOSION, polyp.services()));
+        // world scope, not the igniter's: the chained block belongs to the blast's world
+        PrimedTnt.Config base = TntConfigResolver.resolve(polyp.profiles().resolveWorld(world, MechanicsKeys.TNT),
+                igniter, world, TntPrimeEvent.Cause.EXPLOSION, polyp.services());
         int fuse = ThreadLocalRandom.current().nextInt(Math.max(1, base.fuseTicks() / 4)) + base.fuseTicks() / 8;
         PrimedTnt.Config chained = new PrimedTnt.Config(fuse, base.power(), base.detonateAtFeet(),
                 base.wire(), base.bounce(), base.tntVictimScale(), base.igniteOnPlace());

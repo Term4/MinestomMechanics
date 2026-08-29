@@ -1,14 +1,12 @@
 package io.github.term4.polyp.vri;
 
-import io.github.term4.polyp.MechanicsKeys;
+import io.github.term4.polyp.util.HeldItems;
 import io.github.term4.polyp.Polyp;
 import io.github.term4.polyp.api.event.explosion.TntPrimeEvent;
 import io.github.term4.polyp.entity.PrimedTnt;
 import io.github.term4.polyp.mechanics.durability.DurabilitySystem;
 import io.github.term4.polyp.mechanics.explosion.ExplosionSystem;
-import io.github.term4.polyp.mechanics.explosion.TntConfigResolver;
 import io.github.term4.polyp.world.MechanicsWorld;
-import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.Player;
 import net.minestom.server.entity.EquipmentSlot;
 import net.minestom.server.entity.PlayerHand;
@@ -44,9 +42,8 @@ final class TntIgnite {
         if (explosions == null) return;
         MechanicsWorld world = MechanicsWorld.of(p);
         TntPrimeEvent.Cause cause = flintAndSteel ? TntPrimeEvent.Cause.FLINT_AND_STEEL : TntPrimeEvent.Cause.FIRE_CHARGE;
-        PrimedTnt.Config config = TntConfigResolver.resolve(polyp.profiles().resolve(p, MechanicsKeys.TNT),
-                new TntConfigResolver.TntContext(p, world, cause, polyp.services()));
-        PrimedTnt ignited = PrimedTnt.ignite(explosions, world, e.getBlockPosition(), config, p, cause);
+        PrimedTnt ignited = PrimedTnt.ignite(explosions, world, e.getBlockPosition(),
+                explosions.resolveTnt(p, world, cause), p, cause);
         if (ignited == null) return;
 
         e.setBlockingItemUse(true);
@@ -54,8 +51,8 @@ final class TntIgnite {
             DurabilitySystem durability = polyp.services().durability();
             if (durability != null) durability.damage(p,
                     e.getHand() == PlayerHand.OFF ? EquipmentSlot.OFF_HAND : EquipmentSlot.MAIN_HAND, 1);
-        } else if (p.getGameMode() != GameMode.CREATIVE) {
-            p.setItemInHand(e.getHand(), held.withAmount(held.amount() - 1));
+        } else {
+            HeldItems.consumeOne(p, e.getHand());
         }
     }
 }

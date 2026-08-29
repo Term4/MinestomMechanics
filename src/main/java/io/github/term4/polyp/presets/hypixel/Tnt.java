@@ -24,6 +24,6 @@ public final class Tnt {
     public static @Nullable PrimedTnt spawn(ExplosionSystem explosion, Instance instance, Point tntBlock) {
         MechanicsWorld world = MechanicsWorld.of(instance);
         return PrimedTnt.spawn(explosion, world, tntBlock, TntConfigResolver.resolve(config(),
-                new TntConfigResolver.TntContext(null, world, TntPrimeEvent.Cause.API, Polyp.getInstance().services())));
+                null, world, TntPrimeEvent.Cause.API, Polyp.getInstance().services()));
     }
 }

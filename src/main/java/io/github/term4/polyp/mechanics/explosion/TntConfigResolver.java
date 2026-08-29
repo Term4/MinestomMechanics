@@ -19,6 +19,12 @@ public final class TntConfigResolver {
 
     private TntConfigResolver() {}
 
+    /** {@link #resolve(TntConfig, TntContext)} with the context built inline. */
+    public static PrimedTnt.Config resolve(@Nullable TntConfig cfg, @Nullable Entity igniter, MechanicsWorld world,
+                                           TntPrimeEvent.Cause cause, Services services) {
+        return resolve(cfg, new TntContext(igniter, world, cause, services));
+    }
+
     /** The concrete knobs for one prime; {@code null} config = vanilla. */
     public static PrimedTnt.Config resolve(@Nullable TntConfig cfg, TntContext ctx) {
         PrimedTnt.Config v = PrimedTnt.VANILLA;
