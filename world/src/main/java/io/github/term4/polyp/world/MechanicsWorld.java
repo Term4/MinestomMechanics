@@ -210,6 +210,16 @@ public interface MechanicsWorld extends Block.Getter, ForwardingAudience, Taggab
 
     @NotNull DimensionType dimension();
 
+    /** Stored block light (0-15) - a virtual world reads its own computed light where it differs from base. */
+    default int getBlockLight(int x, int y, int z) {
+        return instance().getBlockLight(x, y, z);
+    }
+
+    /** Stored sky EXPOSURE (0-15, time-independent - vanilla subtracts a time-of-day darken at query time). */
+    default int getSkyLight(int x, int y, int z) {
+        return instance().getSkyLight(x, y, z);
+    }
+
     /** Swept box move against the world; unloaded chunks read SOLID (the safe default - exposure rays, movement). */
     PhysicsResult sweep(@NotNull BoundingBox box, @NotNull Pos position, @NotNull Vec velocity,
                         @Nullable PhysicsResult last, boolean singleCollision);

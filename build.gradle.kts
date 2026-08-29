@@ -52,6 +52,7 @@ repositories {
 }
 
 dependencies {
+    api(project(":world"))
     compileOnly(project(":codegen"))
     annotationProcessor(project(":codegen"))
     val minestomVersion = "2026.08.16-26.2"
