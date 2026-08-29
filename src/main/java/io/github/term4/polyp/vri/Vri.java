@@ -1,7 +1,7 @@
 package io.github.term4.polyp.vri;
 
 import io.github.term4.polyp.MechanicsKeys;
-import io.github.term4.polyp.MechanicsModule;
+import io.github.term4.polyp.ScopedSystem;
 import io.github.term4.polyp.Polyp;
 import io.github.term4.polyp.world.WorldPolicy;
 import net.minestom.server.entity.Entity;
@@ -17,28 +17,16 @@ import org.jetbrains.annotations.Nullable;
  * config left off. Drop spawns fire {@link ItemSpawnEvent}. Break FX (world event 2001) is native in
  * {@code breakBlock} - don't re-add it.
  */
-public final class Vri implements MechanicsModule {
+public final class Vri extends ScopedSystem<VriConfig> {
 
-    private final Polyp polyp;
-    private final VriConfig config;
     private final EventNode<@NotNull Event> node;
 
     private Vri(Polyp polyp, VriConfig config) {
-        this.polyp = polyp;
-        this.config = config;
+        super(polyp, MechanicsKeys.VRI, config);
         this.node = EventNode.all("polyp:vri");
     }
 
     @Override public EventNode<@NotNull Event> node() { return node; }
-
-    public VriConfig config() { return config; }
-
-    Polyp polyp() { return polyp; }
-
-    /** Effective config for {@code subject}: the scoped profile, else the install config. */
-    public VriConfig configFor(@Nullable Entity subject) {
-        return polyp.profiles().resolveOr(subject, MechanicsKeys.VRI, config);
-    }
 
     public static Vri install(@NotNull Polyp polyp, @NotNull VriConfig config) {
         Vri system = new Vri(polyp, config);
@@ -53,8 +41,6 @@ public final class Vri implements MechanicsModule {
         ItemDrop.install(system.node, system);
         FireBreaks.install(system.node, system);
         TntIgnite.install(system.node, system);
-        polyp.register(system);
-        polyp.install(system.node);
-        return system;
+        return polyp.installModule(system);
     }
 }

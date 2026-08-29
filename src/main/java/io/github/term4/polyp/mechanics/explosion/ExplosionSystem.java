@@ -361,10 +361,7 @@ public final class ExplosionSystem implements MechanicsModule {
     }
 
     public static ExplosionSystem install(Polyp polyp, @Nullable ExplosionConfig config) {
-        var system = new ExplosionSystem(polyp, config);
-        polyp.register(system);
-        polyp.install(system.node);
-        return system;
+        return polyp.installModule(new ExplosionSystem(polyp, config));
     }
 
     private static final class RoutedExplosion extends Explosion {

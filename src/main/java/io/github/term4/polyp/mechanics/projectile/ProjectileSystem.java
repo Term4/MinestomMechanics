@@ -2,7 +2,7 @@ package io.github.term4.polyp.mechanics.projectile;
 
 import io.github.term4.polyp.world.MechanicsWorld;
 import io.github.term4.polyp.MechanicsKeys;
-import io.github.term4.polyp.MechanicsModule;
+import io.github.term4.polyp.ScopedSystem;
 import io.github.term4.polyp.Polyp;
 import io.github.term4.polyp.Services;
 import io.github.term4.polyp.api.event.projectile.ProjectileLaunchEvent;
@@ -66,22 +66,19 @@ import java.util.concurrent.ThreadLocalRandom;
  * and spawns the entity. Every registered type's item trigger mounts at install; a click launches only where
  * {@link #armed}.
  */
-public final class ProjectileSystem implements MechanicsModule {
+public final class ProjectileSystem extends ScopedSystem<ProjectileConfig> {
 
     /** This system's identity for per-module TPS scaling (its {@code referenceTps} feel-baseline). */
     public static final Key KEY = Key.key("polyp:projectile");
 
-    private final ProjectileConfig config;
     private final Services services;
-    private final Polyp polyp;
     private final EventNode<@NotNull Event> node;
     private final Map<Key, ProjectileType> types = new ConcurrentHashMap<>();
     private final Set<Key> mounted = ConcurrentHashMap.newKeySet();
     private final Set<Key> enabled = ConcurrentHashMap.newKeySet();
 
     public ProjectileSystem(Polyp polyp, ProjectileConfig config) {
-        this.polyp = polyp;
-        this.config = config;
+        super(polyp, MechanicsKeys.PROJECTILES, config);
         this.services = polyp.services();
         this.node = EventNode.all("polyp:projectile");
         node.addListener(EntityAttackEvent.class, e -> {
@@ -92,14 +89,7 @@ public final class ProjectileSystem implements MechanicsModule {
         });
     }
 
-    public ProjectileConfig config() { return config; }
     public EventNode<@NotNull Event> node() { return node; }
-    public Services services() { return services; }
-
-    /** Effective config for a snapshot carrying none: the shooter's scoped profile, else the install config. */
-    private ProjectileConfig configFor(@Nullable Entity shooter) {
-        return polyp.profiles().resolveOr(shooter, MechanicsKeys.PROJECTILES, config);
-    }
 
     /** Launches a projectile from a snapshot. {@code null} if the type is disabled, cancelled, or the shooter has no instance. */
     public @Nullable ProjectileEntity launch(ProjectileSnapshot snap) {
@@ -368,9 +358,8 @@ public final class ProjectileSystem implements MechanicsModule {
     /** Mounts every registered type's trigger and the config's {@code shootables} ({@link Bow} + {@link FishingRod} when it declares none). Custom types register + {@link #enable} explicitly. */
     public static ProjectileSystem install(Polyp polyp, ProjectileConfig cfg) {
         ProjectileSystem system = new ProjectileSystem(polyp, cfg);
-        polyp.register(system);
         system.registerVanillaDefaults();
-        polyp.install(system.node);
+        polyp.installModule(system);
         for (ProjectileType type : system.types.values()) system.mount(type);
         for (Key key : cfg.typeConfigs.keySet()) {
             if (!system.types.containsKey(key)) throw new IllegalArgumentException("No projectile type registered for " + key.asString());

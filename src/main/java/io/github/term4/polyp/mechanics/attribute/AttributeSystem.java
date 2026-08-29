@@ -8,7 +8,7 @@ import io.github.term4.polyp.mechanics.attribute.source.HeldSource;
 import io.github.term4.polyp.mechanics.attribute.source.SourceRegistry;
 
 import io.github.term4.polyp.MechanicsKeys;
-import io.github.term4.polyp.MechanicsModule;
+import io.github.term4.polyp.ScopedSystem;
 import io.github.term4.polyp.Polyp;
 import io.github.term4.polyp.mechanics.attribute.AttributeConfigResolver.AttributeContext;
 import io.github.term4.polyp.mechanics.attribute.AttributeConfigResolver.ResolvedAttributeConfig;
@@ -57,7 +57,7 @@ import java.util.Map;
  * Attribute/enchant/potion system: a {@link SourceRegistry} plus a scan of active effects and the in-context item's
  * enchants into active sources, read via {@link #context}.
  */
-public final class AttributeSystem implements MechanicsModule {
+public final class AttributeSystem extends ScopedSystem<AttributeConfig> {
 
     /** Identity for per-module TPS scaling. */
     public static final Key KEY = Key.key("polyp:attribute");
@@ -66,9 +66,7 @@ public final class AttributeSystem implements MechanicsModule {
     /** The armor stage's identity for targeted {@link Bypass#attribute} bypass. */
     static final Key ARMOR_ATTRIBUTE_KEY = Key.key("minecraft:armor");
 
-    private final Polyp polyp;
     private final SourceRegistry registry = new SourceRegistry();
-    private final AttributeConfig config;
     private final EventNode<@NotNull EntityEvent> node;
     /** Re-entry guard: the re-added potion fires the add event again. */
     private final ThreadLocal<Boolean> rescaling = ThreadLocal.withInitial(() -> Boolean.FALSE);
@@ -81,8 +79,7 @@ public final class AttributeSystem implements MechanicsModule {
     private static final Tag<ItemStack[]> EQUIP_SNAPSHOT = Tag.Transient("polyp:equip-snapshot");
 
     public AttributeSystem(Polyp polyp, @Nullable AttributeConfig config) {
-        this.polyp = polyp;
-        this.config = config != null ? config : AttributeConfig.builder().build();
+        super(polyp, MechanicsKeys.ATTRIBUTES, config != null ? config : AttributeConfig.builder().build());
         this.node = EventNode.type("polyp:attributes", EventFilter.ENTITY);
         for (Source source : this.config.sources()) registry.register(source);
         node.addListener(EntityPotionAddEvent.class, this::onPotionAdd);
@@ -343,11 +340,6 @@ public final class AttributeSystem implements MechanicsModule {
         return this;
     }
 
-    /** The scoped profile, else the install config. */
-    public AttributeConfig configFor(@Nullable Entity entity) {
-        return polyp.profiles().resolveOr(entity, MechanicsKeys.ATTRIBUTES, config);
-    }
-
     // scoped sources first: a profile's catalog needs no install registration
 
     private @Nullable EntitySource entitySource(LivingEntity subject, Key effectKey) {
@@ -437,7 +429,6 @@ public final class AttributeSystem implements MechanicsModule {
     }
 
     public SourceRegistry registry() { return registry; }
-    public AttributeConfig config() { return config; }
     public EventNode<@NotNull EntityEvent> node() { return node; }
 
     /** {@code level} is 1-based. */
@@ -449,9 +440,6 @@ public final class AttributeSystem implements MechanicsModule {
     }
 
     public static AttributeSystem install(Polyp polyp, @Nullable AttributeConfig config) {
-        AttributeSystem system = new AttributeSystem(polyp, config);
-        polyp.register(system);
-        polyp.install(system.node);
-        return system;
+        return polyp.installModule(new AttributeSystem(polyp, config));
     }
 }

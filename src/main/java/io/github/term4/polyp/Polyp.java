@@ -108,6 +108,13 @@ public final class Polyp {
         return type.cast(modules.get(type));
     }
 
+    /** {@link #register} plus the node mount in one step; every system's {@code install} routes here. */
+    public <M extends MechanicsModule> M installModule(M module) {
+        register(module);
+        if (module.node() != null) install(module.node());
+        return module;
+    }
+
     public @Nullable SprintTracker sprintTracker() { return sprintTracker; }
     public @Nullable MotionTracker motionTracker() { return motionTracker; }
 

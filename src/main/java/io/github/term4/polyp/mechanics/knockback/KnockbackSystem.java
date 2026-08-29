@@ -2,7 +2,7 @@ package io.github.term4.polyp.mechanics.knockback;
 
 import io.github.term4.polyp.MechanicsProfiles;
 import io.github.term4.polyp.MechanicsKeys;
-import io.github.term4.polyp.MechanicsModule;
+import io.github.term4.polyp.ScopedSystem;
 import io.github.term4.polyp.Polyp;
 import io.github.term4.polyp.Services;
 import io.github.term4.polyp.api.event.knockback.KnockbackEvent;
@@ -28,12 +28,11 @@ import org.jetbrains.annotations.Nullable;
  * Knockback system, configured via {@link KnockbackConfig} or the {@link KnockbackEvent} API. No invul window of its
  * own (neither does vanilla); every {@link #apply} deals knockback and gating lives in the attack processor.
  */
-public final class KnockbackSystem implements MechanicsModule {
+public final class KnockbackSystem extends ScopedSystem<KnockbackConfig> {
 
     /** This system's identity for per-module TPS scaling (its {@code referenceTps} feel-baseline). */
     public static final Key KEY = Key.key("polyp:knockback");
 
-    private final KnockbackConfig config;
     private final KnockbackCalculator calc;
     private final MechanicsProfiles profiles;
     private final Services services;
@@ -44,7 +43,7 @@ public final class KnockbackSystem implements MechanicsModule {
     private static final ListenerHandle<KnockbackAppliedEvent> KNOCKBACK_APPLIED = EventDispatcher.getHandle(KnockbackAppliedEvent.class);
 
     public KnockbackSystem(Polyp polyp, KnockbackConfig config) {
-        this.config = config;
+        super(polyp, MechanicsKeys.KNOCKBACK, config);
         this.profiles = polyp.profiles();
         this.node = EventNode.all("polyp:knockback");
         this.services = polyp.services();
@@ -55,12 +54,6 @@ public final class KnockbackSystem implements MechanicsModule {
     /** Resolves the effective knockback values for {@code snap} (config chain + calculator defaults); the {@link KnockbackEvent} preview. */
     public KnockbackConfigResolver.ResolvedKnockbackConfig resolveConfig(KnockbackSnapshot snap) {
         return calc.resolveConfig(snap.config() != null ? snap : snap.withConfig(configFor(snap.target())));
-    }
-
-    /** Effective config for a snapshot carrying none: the victim's scoped profile, else the install config. */
-    private KnockbackConfig configFor(@Nullable Entity target) {
-        KnockbackConfig scoped = profiles.resolve(target, MechanicsKeys.KNOCKBACK);
-        return scoped != null ? scoped : config;
     }
 
     public void apply(KnockbackSnapshot snap) {
@@ -146,8 +139,6 @@ public final class KnockbackSystem implements MechanicsModule {
         if (KNOCKBACK_APPLIED.hasListener()) EventDispatcher.call(new KnockbackAppliedEvent(snap, applied, services));
     }
 
-    public KnockbackConfig config() { return config; }
-
     public EventNode<@NotNull Event> node() { return node; }
 
     /** Installs inert (no install-level config): an {@link #apply} with no scoped or snapshot config applies nothing. Pass an empty config to apply at the vanilla floor. */
@@ -156,10 +147,7 @@ public final class KnockbackSystem implements MechanicsModule {
     }
 
     public static KnockbackSystem install(Polyp polyp, KnockbackConfig config) {
-        var system = new KnockbackSystem(polyp, config);
-        polyp.register(system);
-        polyp.install(system.node);
-        return system;
+        return polyp.installModule(new KnockbackSystem(polyp, config));
     }
 
 }
