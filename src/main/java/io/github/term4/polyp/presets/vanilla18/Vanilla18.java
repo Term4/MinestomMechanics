@@ -7,7 +7,7 @@ import io.github.term4.polyp.fx.Fx;
 import io.github.term4.polyp.entity.DroppedItemEntity;
 import io.github.term4.polyp.mechanics.attack.AttackConfig;
 import io.github.term4.polyp.mechanics.damage.DamageConfig;
-import io.github.term4.polyp.mechanics.death.DeathConfig;
+import io.github.term4.polyp.mechanics.damage.DeathConfig;
 import io.github.term4.polyp.mechanics.explosion.ExplosionConfig;
 import io.github.term4.polyp.mechanics.hunger.HungerConfig;
 import io.github.term4.polyp.mechanics.knockback.KnockbackConfig;

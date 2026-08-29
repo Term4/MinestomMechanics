@@ -6,7 +6,7 @@ import io.github.term4.polyp.mechanics.blocking.BlockingConfig;
 import io.github.term4.polyp.mechanics.cooldown.CooldownConfig;
 import io.github.term4.polyp.mechanics.consumable.ConsumableConfig;
 import io.github.term4.polyp.mechanics.damage.DamageConfig;
-import io.github.term4.polyp.mechanics.death.DeathConfig;
+import io.github.term4.polyp.mechanics.damage.DeathConfig;
 import io.github.term4.polyp.mechanics.durability.DurabilityConfig;
 import io.github.term4.polyp.fx.FxRegistry;
 import io.github.term4.polyp.mechanics.explosion.ExplosionConfig;
@@ -20,7 +20,7 @@ import io.github.term4.polyp.platform.player.PlayerConfig;
 import io.github.term4.polyp.tracking.motion.VelocityRule;
 import io.github.term4.polyp.entity.DroppedItemEntity;
 import io.github.term4.polyp.mechanics.explosion.TntConfig;
-import io.github.term4.polyp.mechanics.item.ItemDamageConfig;
+import io.github.term4.polyp.mechanics.itemdamage.ItemDamageConfig;
 import io.github.term4.polyp.vri.VriConfig;
 import io.github.term4.polyp.util.tick.TickScalingConfig;
 

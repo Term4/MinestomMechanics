@@ -11,7 +11,7 @@ import io.github.term4.polyp.fx.FxContext;
 import io.github.term4.polyp.mechanics.attribute.defense.Bypass;
 import io.github.term4.polyp.mechanics.damage.DamageSnapshot;
 import io.github.term4.polyp.mechanics.damage.DamageSystem;
-import io.github.term4.polyp.mechanics.item.ItemDamageSystem;
+import io.github.term4.polyp.mechanics.itemdamage.ItemDamageSystem;
 import io.github.term4.polyp.mechanics.damage.types.explosion.ExplosionDamage;
 import io.github.term4.polyp.mechanics.explosion.ExplosionConfigResolver.ExplosionContext;
 import io.github.term4.polyp.mechanics.explosion.ExplosionConfigResolver.ResolvedExplosionConfig;
