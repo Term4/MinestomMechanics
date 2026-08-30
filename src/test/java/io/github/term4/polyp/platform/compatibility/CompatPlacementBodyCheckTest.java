@@ -30,6 +30,7 @@ class CompatPlacementBodyCheckTest extends HeadlessServerTest {
             assertTrue(CompatPlacement.placementBodyCheck(op, op, Block.STONE, centered, player));
 
             op.compat().setLegacyClient(true);
+            op.compat().apply(CompatConfig.builder().selfPlacement(true).build());
             assertFalse(CompatPlacement.placementBodyCheck(op, op, Block.OAK_STAIRS, centered, player),
                     "legacy self: stairs into your own face land, as on Paper 1.8");
             assertFalse(CompatPlacement.placementBodyCheck(op, op, Block.STONE, centered, player));
@@ -38,7 +39,14 @@ class CompatPlacementBodyCheckTest extends HeadlessServerTest {
             assertTrue(CompatPlacement.placementBodyCheck(op, other, Block.OAK_STAIRS, centered, player),
                     "other bodies stay precise");
             assertTrue(CompatPlacement.placementBodyCheck(op, other, Block.STONE, centered, player));
+
+            op.compat().apply(CompatConfig.builder().selfPlacement(false).build());
+            assertTrue(CompatPlacement.placementBodyCheck(op, op, Block.OAK_STAIRS, centered, player),
+                    "the knob off = the Hypixel-style server-side prevention");
+            assertFalse(CompatPlacement.placementBodyCheck(op, op, Block.LADDER, centered, player),
+                    "the ladder clutch is vanilla - knob-independent");
         } finally {
+            op.compat().apply(null);
             fp.player.remove();
         }
     }

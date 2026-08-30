@@ -14,9 +14,9 @@ import java.util.function.BiConsumer;
  * entity check outright, and the 1.8 client sends every attempt before its own prediction runs - so on 1.8,
  * self-overlapping placements land (stairs into your own face included). Minestom checks the placer like any
  * body, so a LEGACY client's placement desyncs. Arms {@link OptimizedPlayer#setSelfPlacing} per placement for
- * legacy placers (a modern client refuses these itself; server leniency would let it bury blocks in its own
- * body). Wraps the stock listener; shard worlds use {@code Shard.placementBodyCheck} instead, which adds the
- * no-collision-box skip for other bodies too.
+ * legacy placers whose scope enables {@code CompatConfig.selfPlacement} (a modern client refuses these itself;
+ * server leniency would let it bury blocks in its own body). Wraps the stock listener; shard worlds use
+ * {@code Shard.placementBodyCheck} instead, which adds the no-collision-box skip for other bodies too.
  */
 public final class LegacySelfPlacementFix {
 
@@ -53,6 +53,7 @@ public final class LegacySelfPlacementFix {
 
     /** The null guard scopes the arming to actual block placements (a non-block item has a {@code null} {@code Material#block()}). */
     private static boolean excludesPlacer(ClientPlayerBlockPlacementPacket packet, OptimizedPlayer player) {
-        return player.compat().legacyClient() && player.getItemInHand(packet.hand()).material().block() != null;
+        return player.compat().legacyClient() && player.compat().selfPlacement()
+                && player.getItemInHand(packet.hand()).material().block() != null;
     }
 }
