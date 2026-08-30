@@ -174,6 +174,7 @@ public final class CompatConfig {
             blockPlaceReach = c.blockPlaceReach;
             legacyFluids = c.legacyFluids;
             disableElytraFlight = c.disableElytraFlight;
+            hookPredictionEscort = c.hookPredictionEscort;
             oldFlight = c.oldFlight;
             leftClickItemUsage = c.leftClickItemUsage;
             disableAutoSneak = c.disableAutoSneak;
