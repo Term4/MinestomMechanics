@@ -18,7 +18,7 @@ mavenPublishing {
     pom {
         name = "polyp-world"
         description = project.description
-        url = "https://github.com/Term4/Polyp"
+        url = "https://github.com/TennacleCore/Polyp"
 
         licenses {
             license {
@@ -38,9 +38,9 @@ mavenPublishing {
         }
 
         scm {
-            url = "https://github.com/Term4/Polyp"
-            connection = "scm:git:git://github.com/Term4/Polyp.git"
-            developerConnection = "scm:git:ssh://git@github.com/Term4/Polyp.git"
+            url = "https://github.com/TennacleCore/Polyp"
+            connection = "scm:git:git://github.com/TennacleCore/Polyp.git"
+            developerConnection = "scm:git:ssh://git@github.com/TennacleCore/Polyp.git"
         }
     }
 }

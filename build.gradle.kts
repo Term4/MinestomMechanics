@@ -5,7 +5,7 @@
 
 description = "A library for Minestom 1.8 mechanics"
 group = "io.github.term4"
-version = "0.2.0"
+version = "0.3.0"
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 mavenPublishing {
@@ -19,7 +19,7 @@ mavenPublishing {
     pom {
         name = "polyp"
         description = project.description
-        url = "https://github.com/Term4/Polyp"
+        url = "https://github.com/TennacleCore/Polyp"
 
         licenses {
             license {
@@ -39,9 +39,9 @@ mavenPublishing {
         }
 
         scm {
-            url = "https://github.com/Term4/Polyp"
-            connection = "scm:git:git://github.com/Term4/Polyp.git"
-            developerConnection = "scm:git:ssh://git@github.com/Term4/Polyp.git"
+            url = "https://github.com/TennacleCore/Polyp"
+            connection = "scm:git:git://github.com/TennacleCore/Polyp.git"
+            developerConnection = "scm:git:ssh://git@github.com/TennacleCore/Polyp.git"
         }
     }
 }
