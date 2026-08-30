@@ -20,6 +20,11 @@ public final class CompatConfig {
      * {@code BLINDNESS} maintains a hidden effect (steady near fog while underwater). Non-Animatium modern clients only.
      */
     public final @Nullable SwimSuppression suppressSwim;
+    /**
+     * Effect duration for {@code suppressSwim = BLINDNESS}, re-sent every tick; {@code null} = 60. The client's fog
+     * saturates at 20 ticks - below that it sits in the fade region and the per-tick refresh makes it strobe.
+     */
+    public final @Nullable Integer swimBlindnessTicks;
     /** Reject a move that newly places the SERVER hitbox in block collision - a client rendering itself crawling can't traverse a gap its server hitbox can't fit. */
     public final @Nullable Boolean restrictMovement;
     /** Server box stays at standing dimensions (no crouch shrink) + 1.8 eye heights (1.54 sneaking); the client still renders its own pose. */
@@ -89,6 +94,7 @@ public final class CompatConfig {
     private CompatConfig(Builder b) {
         disabledPoses = b.disabledPoses;
         suppressSwim = b.suppressSwim;
+        swimBlindnessTicks = b.swimBlindnessTicks;
         restrictMovement = b.restrictMovement;
         legacyHitbox = b.legacyHitbox;
         attackHitboxMargin = b.attackHitboxMargin;
@@ -134,6 +140,7 @@ public final class CompatConfig {
     public static final class Builder {
         private @Nullable Set<EntityPose> disabledPoses;
         private @Nullable SwimSuppression suppressSwim;
+        private @Nullable Integer swimBlindnessTicks;
         private @Nullable Boolean restrictMovement;
         private @Nullable Boolean legacyHitbox;
         private @Nullable Float attackHitboxMargin;
@@ -172,6 +179,7 @@ public final class CompatConfig {
         Builder(CompatConfig c) {
             disabledPoses = c.disabledPoses;
             suppressSwim = c.suppressSwim;
+            swimBlindnessTicks = c.swimBlindnessTicks;
             restrictMovement = c.restrictMovement;
             legacyHitbox = c.legacyHitbox;
             attackHitboxMargin = c.attackHitboxMargin;
@@ -209,6 +217,7 @@ public final class CompatConfig {
         public Builder disabledPoses(@Nullable Set<EntityPose> v) { disabledPoses = v != null ? Set.copyOf(v) : null; return this; }
         public Builder disabledPoses(EntityPose... poses) { disabledPoses = Set.of(poses); return this; }
         public Builder suppressSwim(@Nullable SwimSuppression v) { suppressSwim = v; return this; }
+        public Builder swimBlindnessTicks(@Nullable Integer v) { swimBlindnessTicks = v; return this; }
         public Builder restrictMovement(@Nullable Boolean v) { restrictMovement = v; return this; }
         public Builder legacyHitbox(@Nullable Boolean v) { legacyHitbox = v; return this; }
         public Builder attackHitboxMargin(@Nullable Float v) { attackHitboxMargin = v; return this; }

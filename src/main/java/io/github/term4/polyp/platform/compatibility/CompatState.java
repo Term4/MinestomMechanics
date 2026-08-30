@@ -104,6 +104,9 @@ public final class CompatState {
         return legacyClient || handlesNatively(AnimatiumFeature.DISABLE_SWIM_POSE) ? null : policy.suppressSwim;
     }
 
+    /** Duration of the BLINDNESS lever's per-tick refresh; {@code null} = 60 (safely above the 20-tick fog knee). */
+    public int swimBlindnessTicks() { return policy.swimBlindnessTicks != null ? policy.swimBlindnessTicks : 60; }
+
     /** The lever {@code CompatSwim} currently holds on the wire; dies with the player, so a relog starts clean. */
     public @Nullable CompatConfig.SwimSuppression activeSwimFix() { return activeSwimFix; }
     public void setActiveSwimFix(@Nullable CompatConfig.SwimSuppression v) { this.activeSwimFix = v; }

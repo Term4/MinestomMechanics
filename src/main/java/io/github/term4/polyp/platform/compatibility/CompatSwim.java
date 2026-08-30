@@ -22,13 +22,11 @@ import org.jetbrains.annotations.Nullable;
  * Drives {@code CompatConfig.suppressSwim}: while an affected client's feet are in water, one of the client's two
  * wire-drivable sprint gates is held shut so it can never enter the swim pose; released the moment it leaves.
  * {@code FOOD} rides the {@code OptimizedPlayer} outgoing clamp (any server food update stays clamped mid-water);
- * {@code BLINDNESS} refreshes a hidden effect every tick, saturated (&ge;20 ticks) so the fog factor can't sawtooth.
+ * {@code BLINDNESS} refreshes a hidden effect every tick ({@code swimBlindnessTicks} long - the default stays above
+ * the 20-tick fog saturation knee so the fog factor can't sawtooth).
  * All state lives on {@link CompatState}, so disconnect/relog cleanup is free. Installed once; inert unless configured.
  */
 public final class CompatSwim {
-
-    /** Duration is re-sent every tick, so it never expires and never dips below the 20-tick fog saturation knee. */
-    private static final Potion HIDDEN_BLINDNESS = new Potion(PotionEffect.BLINDNESS, 0, 60, Potion.AMBIENT_FLAG);
 
     private CompatSwim() {}
 
@@ -53,7 +51,8 @@ public final class CompatSwim {
         }
         // a real blindness effect already gates sprint; riding it also keeps its client duration honest
         if (want == SwimSuppression.BLINDNESS && !player.hasEffect(PotionEffect.BLINDNESS)) {
-            player.sendPacket(new EntityEffectPacket(player.getEntityId(), HIDDEN_BLINDNESS));
+            player.sendPacket(new EntityEffectPacket(player.getEntityId(),
+                    new Potion(PotionEffect.BLINDNESS, 0, compat.swimBlindnessTicks(), Potion.AMBIENT_FLAG)));
         }
         // the gate takes a round trip; a pose slipped in before it landed is forced back (isPoseDisabled covers later ones)
         if (want != null && player.getPose() == EntityPose.SWIMMING) player.setPose(EntityPose.STANDING);

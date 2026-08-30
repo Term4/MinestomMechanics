@@ -78,6 +78,12 @@ class CompatSwimTest extends HeadlessServerTest {
             assertEquals(PotionEffect.BLINDNESS, effect.potion().effect());
             assertTrue(effect.potion().duration() >= 20, "saturated: the fog factor must not enter the fade region");
 
+            // configured duration takes over on the next refresh, no transition needed
+            op.compat().apply(BLINDNESS.toBuilder().swimBlindnessTicks(40).build());
+            fp.sent.clear();
+            CompatSwim.tick(op);
+            assertEquals(40, fp.sent(EntityEffectPacket.class).getFirst().potion().duration());
+
             // exit removes the hidden effect
             fp.player.teleport(DRY).join();
             fp.sent.clear();
