@@ -47,15 +47,19 @@ mavenPublishing {
 }
 
 repositories {
+    mavenLocal() // polyp-world when the sibling checkout is absent
     mavenCentral()
     maven("https://jitpack.io")
 }
 
+// the polyp-world seam is EMBEDDED in this jar (below), not a published dependency: polyp ships to Maven
+// Central self-contained. Archipelago consumes the same classes via the thin io.github.term4:polyp-world.
+val embedded: Configuration by configurations.creating
+configurations.compileOnly.get().extendsFrom(embedded)
+configurations.testImplementation.get().extendsFrom(embedded)
+
 dependencies {
-    // the :world seam is EMBEDDED in this jar (below), not a published dependency: polyp ships to Maven
-    // Central self-contained. Archipelago consumes the same classes via the thin io.github.term4:polyp-world.
-    compileOnly(project(":world"))
-    testImplementation(project(":world"))
+    embedded("io.github.term4:polyp-world:0.2.0")
     compileOnly(project(":codegen"))
     annotationProcessor(project(":codegen"))
     val minestomVersion = "2026.08.16-26.2"
@@ -85,10 +89,8 @@ tasks.test {
     // synchronous player spawns + relaxed thread asserts (like Minestom's Env); must be set before ServerFlag loads
     systemProperty("minestom.inside-test", "true")
 }
-// polyp publishes self-contained: the :world module's classes + sources ride this artifact
+// polyp publishes self-contained: the polyp-world classes ride this artifact (sources ship in polyp-world's own)
 tasks.jar {
-    from(project(":world").sourceSets.main.map { it.output })
-}
-tasks.withType<Jar>().configureEach {
-    if (name == "sourcesJar") from(project(":world").sourceSets.main.map { it.allSource })
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from({ embedded.map(::zipTree) })
 }
