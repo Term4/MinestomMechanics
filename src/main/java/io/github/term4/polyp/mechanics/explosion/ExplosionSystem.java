@@ -97,6 +97,11 @@ public final class ExplosionSystem implements MechanicsModule {
         return TntConfigResolver.resolve(cfg, new TntConfigResolver.TntContext(igniter, world, cause, services));
     }
 
+    public @Nullable PrimedTnt primeTnt(Instance instance, Point pos, @Nullable Entity igniter,
+                                        TntPrimeEvent.Cause cause) {
+        return primeTnt(MechanicsWorld.of(instance), pos, igniter, cause);
+    }
+
     /**
      * Scope-resolved prime at {@code pos}: converts a TNT block sitting there, else a blockless spawn. The default
      * entry point; explicit-config control stays on {@link PrimedTnt#spawn}/{@link PrimedTnt#ignite}.
