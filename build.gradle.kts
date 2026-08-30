@@ -1,11 +1,11 @@
 ﻿plugins {
     `java-library`
-    id("com.vanniktech.maven.publish") version "0.36.0"
+    id("com.vanniktech.maven.publish") version "0.37.0"
 }
 
 description = "A library for Minestom 1.8 mechanics"
 group = "io.github.term4"
-version = "0.3.0"
+version = "0.3.1"
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 mavenPublishing {
@@ -58,7 +58,7 @@ dependencies {
     testImplementation(project(":world"))
     compileOnly(project(":codegen"))
     annotationProcessor(project(":codegen"))
-    val minestomVersion = "2026.08.16-26.2"
+    val minestomVersion = "2026.08.28-26.2"
     val slf4jVersion = "2.0.18"
     val junitVersion = "6.1.3"
 

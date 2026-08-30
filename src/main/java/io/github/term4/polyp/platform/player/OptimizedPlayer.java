@@ -59,7 +59,7 @@ public class OptimizedPlayer extends Player implements ExternallyTickable {
     }
 
     // @ApiStatus.Internal override: super is exactly this field write + dispatcher().updateElement (verified
-    // 2026.07.12-26.2, re-verify on bumps) - an externally ticked player in the global dispatcher double-ticks
+    // 2026.08.28-26.2, re-verify on bumps) - an externally ticked player in the global dispatcher double-ticks
     @Override protected void refreshCurrentChunk(@NotNull Chunk chunk) {
         if (MechanicsWorld.externallyTicked(this)) {
             currentChunk = chunk;

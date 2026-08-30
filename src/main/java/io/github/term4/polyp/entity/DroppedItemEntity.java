@@ -50,7 +50,7 @@ public class DroppedItemEntity extends ItemEntity implements ExternallyTickable 
     public static final Key KEY = Key.key("polyp:item");
 
     // @ApiStatus.Internal override: super is exactly this field write + dispatcher().updateElement (verified
-    // 2026.07.12-26.2, re-verify on bumps) - an externally ticked entity in the global dispatcher double-ticks
+    // 2026.08.28-26.2, re-verify on bumps) - an externally ticked entity in the global dispatcher double-ticks
     @Override protected void refreshCurrentChunk(@NotNull net.minestom.server.instance.Chunk chunk) {
         if (MechanicsWorld.externallyTicked(this)) {
             currentChunk = chunk;
