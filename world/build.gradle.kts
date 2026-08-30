@@ -1,4 +1,4 @@
-plugins {
+﻿plugins {
     `java-library`
     id("com.vanniktech.maven.publish")
 }
@@ -47,7 +47,6 @@ mavenPublishing {
 
 repositories {
     mavenCentral()
-    maven("https://jitpack.io")
 }
 
 dependencies {
