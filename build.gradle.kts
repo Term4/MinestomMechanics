@@ -60,7 +60,7 @@ dependencies {
     annotationProcessor(project(":codegen"))
     val minestomVersion = "2026.08.16-26.2"
     val slf4jVersion = "2.0.18"
-    val junitVersion = "6.0.3"
+    val junitVersion = "6.1.3"
 
     compileOnly("net.minestom:minestom:$minestomVersion")
     // SLF4J facade only; a Minestom runtime always provides the api + a binding, so compileOnly (like Minestom). Never ship a binding.
@@ -70,9 +70,9 @@ dependencies {
     testImplementation("net.minestom:minestom:$minestomVersion")
     // headless server harness (Env/@EnvTest) for entity-backed golden tests; test-only, never shipped
     testImplementation("net.minestom:testing:$minestomVersion")
-    testImplementation("org.tinylog:tinylog-api:2.8.0-M1")
-    testImplementation("org.tinylog:tinylog-impl:2.8.0-M1")
-    testImplementation("org.tinylog:slf4j-tinylog:2.8.0-M1")
+    testImplementation("org.tinylog:tinylog-api:2.8.0-M2")
+    testImplementation("org.tinylog:tinylog-impl:2.8.0-M2")
+    testImplementation("org.tinylog:slf4j-tinylog:2.8.0-M2")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
