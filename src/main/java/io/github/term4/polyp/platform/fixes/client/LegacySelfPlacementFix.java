@@ -16,11 +16,11 @@ import java.util.function.BiConsumer;
 
 /**
  * 1.8 self-placement: 1.8 skips the placement entity check for no-collision-box blocks and guts it for stairs
- * (stale raytrace bounds); Minestom checks them all, so the block desyncs. Arms
- * {@link OptimizedPlayer#setSelfPlacing} per placement - the placer only, and for stairs only while the placer
- * doesn't cover the target cell's center ({@link BlockContact#blocksLegacyPlacement}: a centered player can't
- * bury a stair in their own body, clutch placements pass). Wraps the stock listener; shard worlds use
- * {@code Shard.placementBodyCheck} instead - that check covers every body, this one just the placer.
+ * (stale raytrace bounds); Minestom checks them all, so a LEGACY client's accepted placement desyncs. Arms
+ * {@link OptimizedPlayer#setSelfPlacing} per placement - legacy placers only (a modern client refuses these
+ * placements itself; server leniency would let it bury blocks in its own body), and for stairs only while the
+ * placer doesn't cover the target cell's center ({@link BlockContact#blocksLegacyPlacement}). Wraps the stock
+ * listener; shard worlds use {@code Shard.placementBodyCheck} instead - that check covers every body.
  */
 public final class LegacySelfPlacementFix {
 
@@ -57,6 +57,7 @@ public final class LegacySelfPlacementFix {
 
     /** The null guard is required: a non-block item right-clicking a block has a {@code null} {@code Material#block()}. */
     private static boolean excludesPlacer(ClientPlayerBlockPlacementPacket packet, Player player) {
+        if (!(player instanceof OptimizedPlayer op) || !op.compat().legacyClient()) return false;
         Block placing = player.getItemInHand(packet.hand()).material().block();
         if (placing == null || !BlockContact.legacyPlacementCheckExempt(placing)) return false;
         Point cell = placementCell(packet, player);

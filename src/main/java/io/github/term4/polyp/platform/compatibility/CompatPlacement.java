@@ -2,9 +2,12 @@ package io.github.term4.polyp.platform.compatibility;
 
 import io.github.term4.polyp.Polyp;
 import io.github.term4.polyp.platform.player.OptimizedPlayer;
+import io.github.term4.polyp.util.BlockContact;
 import io.github.term4.polyp.world.MechanicsWorld;
 import io.github.term4.polyp.tracking.ClientInfoTracker;
+import net.minestom.server.collision.BoundingBox;
 import net.minestom.server.coordinate.Point;
+import net.minestom.server.instance.block.Block;
 import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.EventFilter;
@@ -30,6 +33,19 @@ import org.jetbrains.annotations.NotNull;
 public final class CompatPlacement {
 
     private CompatPlacement() {}
+
+    /**
+     * The per-body placement entity check for mixed-version play (shaped for a shard router's body-check hook):
+     * a LEGACY placer gets the 1.8 semantics ({@link BlockContact#blocksLegacyPlacement} - passable blocks
+     * unchecked, stairs blocked only by a body covering the cell center); everyone else keeps the precise
+     * modern check their own client predicts. Animatium counts as modern for now.
+     */
+    public static boolean placementBodyCheck(@NotNull Player placer, @NotNull Block placing,
+                                             @NotNull Point cellRelativeEntity, @NotNull BoundingBox entityBox) {
+        return placer instanceof OptimizedPlayer op && op.compat().legacyClient()
+                ? BlockContact.blocksLegacyPlacement(placing, cellRelativeEntity, entityBox)
+                : placing.collisionShape().intersectBox(cellRelativeEntity, entityBox);
+    }
 
     public static void install(Polyp polyp) {
         EventNode<@NotNull PlayerEvent> node = EventNode.type("polyp:compat-placement", EventFilter.PLAYER);
