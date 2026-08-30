@@ -47,8 +47,9 @@ public final class CompatPlacement {
      *
      * <p>Server POLICY on top of the vanilla mechanic (a Hypixel-style anticheat refusing self-overlap) belongs
      * to the app: cancel {@code PlayerBlockPlaceEvent} - both placement paths fire it with the resolved target
-     * and resync on cancel - with {@link BlockContact#overlapsBody} as the condition. Wholesale replacements go
-     * through the body-check hook itself.
+     * and resync on cancel - with {@link BlockContact#overlapsBody} as the condition, filtered by
+     * {@link BlockContact.Collision} level (all overlaps, partial-and-up, or suffocating full cubes only).
+     * Wholesale replacements go through the body-check hook itself.
      */
     public static boolean placementBodyCheck(@NotNull Player placer, @NotNull Entity body, @NotNull Block placing,
                                              @NotNull Point cellRelativeBody, @NotNull BoundingBox bodyBox) {

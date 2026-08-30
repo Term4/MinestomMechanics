@@ -40,13 +40,17 @@ class CompatPlacementBodyCheckTest extends HeadlessServerTest {
                     "other bodies stay precise");
             assertTrue(CompatPlacement.placementBodyCheck(op, other, Block.STONE, centered, player));
 
-            // the app-side veto condition (a Hypixel-style PlayerBlockPlaceEvent cancel)
+            // the app-side veto condition (a Hypixel-style PlayerBlockPlaceEvent cancel), by fill level
             Vec feet = new Vec(fp.player.getPosition().blockX(), 65, fp.player.getPosition().blockZ());
             assertTrue(BlockContact.overlapsBody(Block.OAK_STAIRS, feet, fp.player),
                     "a stair in the placer's feet cell overlaps them");
             assertFalse(BlockContact.overlapsBody(Block.LADDER, feet, fp.player),
                     "no collision shape, no overlap");
             assertFalse(BlockContact.overlapsBody(Block.OAK_STAIRS, feet.add(3, 0, 0), fp.player));
+            assertTrue(BlockContact.overlapsBody(Block.OAK_STAIRS, feet, fp.player, BlockContact.Collision.PARTIAL));
+            assertFalse(BlockContact.overlapsBody(Block.OAK_STAIRS, feet, fp.player, BlockContact.Collision.FULL),
+                    "a FULL-level policy lets partial blocks through");
+            assertTrue(BlockContact.overlapsBody(Block.STONE, feet, fp.player, BlockContact.Collision.FULL));
         } finally {
             fp.player.remove();
         }

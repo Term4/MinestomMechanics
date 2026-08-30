@@ -242,6 +242,14 @@ public final class BlockContact {
         return !block.blocksMotion();
     }
 
+    /** How much of the cell a block's collision fills - the filter level a self-place policy keys on. */
+    public enum Collision { NONE, PARTIAL, FULL }
+
+    public static Collision collisionOf(Block block) {
+        if (isPassable(block)) return Collision.NONE;
+        return isFullCube(block) ? Collision.FULL : Collision.PARTIAL;
+    }
+
     /**
      * Whether {@code block} placed at {@code cell} would overlap {@code body} - the veto condition for a server
      * refusing 1.8 self-overlap as POLICY (cancel {@code PlayerBlockPlaceEvent} when this holds for the placer).
@@ -251,5 +259,10 @@ public final class BlockContact {
         Point at = body.getPosition();
         if (body instanceof Player) at = at.add(at.sub(cell).mul(0.0000001)); // upstream: nudged off the cell boundary
         return block.collisionShape().intersectBox(at.sub(cell), body.getBoundingBox());
+    }
+
+    /** {@link #overlapsBody} at a filter level: only blocks filling at least {@code level} count (FULL = suffocating cubes only). */
+    public static boolean overlapsBody(Block block, Point cell, Entity body, Collision level) {
+        return collisionOf(block).compareTo(level) >= 0 && overlapsBody(block, cell, body);
     }
 }
