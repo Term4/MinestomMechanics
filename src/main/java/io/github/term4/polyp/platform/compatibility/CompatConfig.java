@@ -17,7 +17,8 @@ public final class CompatConfig {
     /**
      * Suppress modern swim-posing by gating sprint client-side while in water (food &le; 6 and blindness are the only
      * wire-drivable sprint gates). {@code FOOD} clamps outgoing food to 6 (3-shank HUD, server food untouched);
-     * {@code BLINDNESS} maintains a hidden effect (steady near fog while underwater). Non-Animatium modern clients only.
+     * {@code BLINDNESS} maintains a hidden effect (steady near fog while underwater). Non-Animatium modern clients
+     * only, and never creative/spectator: mayfly bypasses the client's food gate, so {@code FOOD} can't hold there.
      */
     public final @Nullable SwimSuppression suppressSwim;
     /**
