@@ -50,6 +50,7 @@ public final class CompatState {
     private boolean attackCooldownRemoved = false;
     private double savedAttackSpeedBase = 4.0; // vanilla generic.attack_speed default until a removal captures the real base
     private boolean sprintStripped = false;
+    private @Nullable CompatConfig.SwimSuppression activeSwimFix;
     private @Nullable EntityPose interceptedPose;
     private @NotNull Set<AnimatiumFeature> nativeFeatures = Set.of();
     private boolean animatiumClient = false;
@@ -98,7 +99,19 @@ public final class CompatState {
     public boolean sprintStripped() { return sprintStripped; }
     public void setSprintStripped(boolean v) { this.sprintStripped = v; }
 
-    public boolean isPoseDisabled(@NotNull EntityPose pose) { return disabledPoses().contains(pose); }
+    /** The lever configured for THIS client ({@code null} = none): legacy can't swim-pose, Animatium disables it natively. */
+    public @Nullable CompatConfig.SwimSuppression suppressSwim() {
+        return legacyClient || handlesNatively(AnimatiumFeature.DISABLE_SWIM_POSE) ? null : policy.suppressSwim;
+    }
+
+    /** The lever {@code CompatSwim} currently holds on the wire; dies with the player, so a relog starts clean. */
+    public @Nullable CompatConfig.SwimSuppression activeSwimFix() { return activeSwimFix; }
+    public void setActiveSwimFix(@Nullable CompatConfig.SwimSuppression v) { this.activeSwimFix = v; }
+
+    public boolean isPoseDisabled(@NotNull EntityPose pose) {
+        // an engaged swim fix implies the pose is unwanted, even in configs without disabledPoses
+        return disabledPoses().contains(pose) || (pose == EntityPose.SWIMMING && activeSwimFix != null);
+    }
 
     /** The Animatium features this client applies natively (empty for non-Animatium clients); the enforcers gate the matching hack off via {@link #handlesNatively}. */
     public void setNativeFeatures(@NotNull Set<AnimatiumFeature> features) { this.nativeFeatures = features; }

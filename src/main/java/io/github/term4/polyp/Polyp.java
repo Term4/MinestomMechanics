@@ -4,6 +4,7 @@ import io.github.term4.polyp.mechanics.attack.FakeHits;
 import io.github.term4.polyp.platform.SharedTeam;
 import io.github.term4.polyp.platform.compatibility.CompatAnimatium;
 import io.github.term4.polyp.platform.compatibility.CompatCreativeGuard;
+import io.github.term4.polyp.platform.compatibility.CompatSwim;
 import io.github.term4.polyp.platform.compatibility.CompatMovement;
 import io.github.term4.polyp.platform.compatibility.CompatOffhand;
 import io.github.term4.polyp.platform.compatibility.CompatPlacement;
@@ -149,6 +150,8 @@ public final class Polyp {
             CompatPlacement.install(this);
             // strips attack_range off creative-echoed items, so the client-view stamp never becomes server state
             CompatCreativeGuard.install(this);
+            // inert unless CompatConfig.suppressSwim
+            CompatSwim.install(this);
         }
         // the one lib scoreboard team; features enroll, this cleans up on disconnect
         SharedTeam.install(this);
