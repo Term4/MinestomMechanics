@@ -3,20 +3,24 @@ package io.github.term4.polyp.platform.fixes.client;
 import io.github.term4.polyp.platform.player.OptimizedPlayer;
 import io.github.term4.polyp.util.BlockContact;
 import net.minestom.server.MinecraftServer;
+import net.minestom.server.coordinate.Point;
 import net.minestom.server.entity.Player;
-import net.minestom.server.item.Material;
+import net.minestom.server.instance.Instance;
+import net.minestom.server.instance.block.Block;
 import net.minestom.server.listener.BlockPlacementListener;
 import net.minestom.server.network.packet.client.play.ClientPlayerBlockPlacementPacket;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiConsumer;
 
 /**
- * 1.8 self-placement: 1.8 skips the placement entity check for no-collision-box blocks and (via stale raytrace
- * bounds) stairs; Minestom checks them all, so the block desyncs. Arms {@link OptimizedPlayer#setSelfPlacing}
- * per placement for {@link BlockContact#legacyPlacementCheckExempt} blocks - the placer only here; the shard
- * router skips its whole check. Wraps the stock listener; an app that replaces the placement listener
- * re-installs with it as the delegate, LAST.
+ * 1.8 self-placement: 1.8 skips the placement entity check for no-collision-box blocks and guts it for stairs
+ * (stale raytrace bounds); Minestom checks them all, so the block desyncs. Arms
+ * {@link OptimizedPlayer#setSelfPlacing} per placement - the placer only, and for stairs only while the placer
+ * doesn't cover the target cell's center ({@link BlockContact#blocksLegacyPlacement}: a centered player can't
+ * bury a stair in their own body, clutch placements pass). Wraps the stock listener; shard worlds use
+ * {@code Shard.placementBodyCheck} instead - that check covers every body, this one just the placer.
  */
 public final class LegacySelfPlacementFix {
 
@@ -42,8 +46,7 @@ public final class LegacySelfPlacementFix {
 
     private static void wrapped(BiConsumer<ClientPlayerBlockPlacementPacket, Player> delegate,
                                 ClientPlayerBlockPlacementPacket packet, Player player) {
-        OptimizedPlayer op = player instanceof OptimizedPlayer o
-                && excludesPlacer(player.getItemInHand(packet.hand()).material()) ? o : null;
+        OptimizedPlayer op = player instanceof OptimizedPlayer o && excludesPlacer(packet, o) ? o : null;
         if (op != null) op.setSelfPlacing(true);
         try {
             delegate.accept(packet, player);
@@ -52,8 +55,21 @@ public final class LegacySelfPlacementFix {
         }
     }
 
-    /** The null guard is required: a non-block item right-clicking a block has a {@code null} {@link Material#block()}. */
-    private static boolean excludesPlacer(Material m) {
-        return m.block() != null && BlockContact.legacyPlacementCheckExempt(m.block());
+    /** The null guard is required: a non-block item right-clicking a block has a {@code null} {@code Material#block()}. */
+    private static boolean excludesPlacer(ClientPlayerBlockPlacementPacket packet, Player player) {
+        Block placing = player.getItemInHand(packet.hand()).material().block();
+        if (placing == null || !BlockContact.legacyPlacementCheckExempt(placing)) return false;
+        Point cell = placementCell(packet, player);
+        return cell != null
+                && !BlockContact.blocksLegacyPlacement(placing, player.getPosition().sub(cell), player.getBoundingBox());
+    }
+
+    /** The listener's own target resolution, reduced: a replaceable clicked block is replaced in place, else the neighbor. */
+    private static @Nullable Point placementCell(ClientPlayerBlockPlacementPacket packet, Player player) {
+        Instance instance = player.getInstance();
+        Point clicked = packet.blockPosition();
+        if (instance == null || !instance.isChunkLoaded(clicked)) return null;
+        Block at = instance.getBlock(clicked);
+        return at.isAir() || at.registry().isReplaceable() ? clicked : clicked.relative(packet.blockFace());
     }
 }

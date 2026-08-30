@@ -242,10 +242,27 @@ public final class BlockContact {
     }
 
     /**
-     * Blocks 1.8 places with no entity check: no collision box skips it outright, and stairs' stale raytrace
-     * bounds ({@code hasRaytraced} never resets) reduce it to a corner sliver.
+     * Blocks 1.8 places with a gutted entity check: no collision box skips it outright; stairs' stale raytrace
+     * bounds ({@code hasRaytraced} never resets) reduce it to one 0.5-cube octant - see
+     * {@link #blocksLegacyPlacement} for what remains of the stairs check.
      */
     public static boolean legacyPlacementCheckExempt(Block block) {
         return isPassable(block) || block.name().endsWith("_stairs");
+    }
+
+    /**
+     * The 1.8 placement entity check for one body ({@code cellRelativeEntity} = entity pos minus the target
+     * cell). Passable blocks check nothing. Stairs check one stale-raytrace octant, so a body blocks them only
+     * when it covers EVERY octant - i.e. contains the cell center: a centered player still can't bury a stair
+     * in their own body, while edge/falling clutch placements pass. Everything else intersects its real shape.
+     */
+    public static boolean blocksLegacyPlacement(Block placing, Point cellRelativeEntity, BoundingBox entityBox) {
+        if (isPassable(placing)) return false;
+        if (placing.name().endsWith("_stairs")) {
+            return cellRelativeEntity.x() + entityBox.minX() < 0.5 && cellRelativeEntity.x() + entityBox.maxX() > 0.5
+                    && cellRelativeEntity.y() + entityBox.minY() < 0.5 && cellRelativeEntity.y() + entityBox.maxY() > 0.5
+                    && cellRelativeEntity.z() + entityBox.minZ() < 0.5 && cellRelativeEntity.z() + entityBox.maxZ() > 0.5;
+        }
+        return placing.collisionShape().intersectBox(cellRelativeEntity, entityBox);
     }
 }
