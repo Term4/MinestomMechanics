@@ -2,6 +2,7 @@ package io.github.term4.polyp.platform.compatibility;
 
 import io.github.term4.polyp.platform.player.OptimizedPlayer;
 import io.github.term4.polyp.testsupport.FakePlayer;
+import io.github.term4.polyp.util.BlockContact;
 import io.github.term4.polyp.testsupport.HeadlessServerTest;
 import net.minestom.server.collision.BoundingBox;
 import net.minestom.server.coordinate.Pos;
@@ -30,7 +31,6 @@ class CompatPlacementBodyCheckTest extends HeadlessServerTest {
             assertTrue(CompatPlacement.placementBodyCheck(op, op, Block.STONE, centered, player));
 
             op.compat().setLegacyClient(true);
-            op.compat().apply(CompatConfig.builder().selfPlacement(true).build());
             assertFalse(CompatPlacement.placementBodyCheck(op, op, Block.OAK_STAIRS, centered, player),
                     "legacy self: stairs into your own face land, as on Paper 1.8");
             assertFalse(CompatPlacement.placementBodyCheck(op, op, Block.STONE, centered, player));
@@ -40,13 +40,14 @@ class CompatPlacementBodyCheckTest extends HeadlessServerTest {
                     "other bodies stay precise");
             assertTrue(CompatPlacement.placementBodyCheck(op, other, Block.STONE, centered, player));
 
-            op.compat().apply(CompatConfig.builder().selfPlacement(false).build());
-            assertTrue(CompatPlacement.placementBodyCheck(op, op, Block.OAK_STAIRS, centered, player),
-                    "the knob off = the Hypixel-style server-side prevention");
-            assertFalse(CompatPlacement.placementBodyCheck(op, op, Block.LADDER, centered, player),
-                    "the ladder clutch is vanilla - knob-independent");
+            // the app-side veto condition (a Hypixel-style PlayerBlockPlaceEvent cancel)
+            Vec feet = new Vec(fp.player.getPosition().blockX(), 65, fp.player.getPosition().blockZ());
+            assertTrue(BlockContact.overlapsBody(Block.OAK_STAIRS, feet, fp.player),
+                    "a stair in the placer's feet cell overlaps them");
+            assertFalse(BlockContact.overlapsBody(Block.LADDER, feet, fp.player),
+                    "no collision shape, no overlap");
+            assertFalse(BlockContact.overlapsBody(Block.OAK_STAIRS, feet.add(3, 0, 0), fp.player));
         } finally {
-            op.compat().apply(null);
             fp.player.remove();
         }
     }

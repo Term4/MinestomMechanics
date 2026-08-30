@@ -38,18 +38,22 @@ public final class CompatPlacement {
     /**
      * The per-body placement entity check for mixed-version play (shaped for a shard router's body-check hook).
      * A LEGACY placer gets the 1.8 reference-server semantics, source-verified against Paper 1.8.8 + the 1.8.9
-     * client: with {@code selfPlacement} on, the placer's own body NEVER blocks their placement (Paper passes
-     * the placer into {@code checkNoEntityCollision}, which excludes it - and the 1.8 client sends every attempt
-     * before its own prediction runs, so the server's accept is what the player sees; stairs into your own face
-     * land). Off = the Hypixel-style server-side prevention. The no-collision-box skip (1.8's null-AABB - the
-     * ladder clutch) is vanilla and rides the legacy client alone. Other bodies stay on the precise check - the
-     * strict end of 1.8's stale-bounds race. Everyone else (Animatium included, for now) is precise throughout,
-     * matching their own client's prediction. Apps wanting different semantics wrap or replace this at the hook.
+     * client: the placer's own body NEVER blocks their placement (Paper passes the placer into
+     * {@code checkNoEntityCollision}, which excludes it - and the 1.8 client sends every attempt before its own
+     * prediction runs, so the server's accept is what the player sees; stairs into your own face land), and
+     * no-collision-box blocks check nobody (1.8's null-AABB skip - the ladder clutch). Other bodies stay on the
+     * precise check; everyone else (Animatium included, for now) is precise throughout, matching their own
+     * client's prediction.
+     *
+     * <p>Server POLICY on top of the vanilla mechanic (a Hypixel-style anticheat refusing self-overlap) belongs
+     * to the app: cancel {@code PlayerBlockPlaceEvent} - both placement paths fire it with the resolved target
+     * and resync on cancel - with {@link BlockContact#overlapsBody} as the condition. Wholesale replacements go
+     * through the body-check hook itself.
      */
     public static boolean placementBodyCheck(@NotNull Player placer, @NotNull Entity body, @NotNull Block placing,
                                              @NotNull Point cellRelativeBody, @NotNull BoundingBox bodyBox) {
         if (placer instanceof OptimizedPlayer op && op.compat().legacyClient()) {
-            if (body == placer && op.compat().selfPlacement()) return false;
+            if (body == placer) return false;
             if (BlockContact.isPassable(placing)) return false;
         }
         return placing.collisionShape().intersectBox(cellRelativeBody, bodyBox);

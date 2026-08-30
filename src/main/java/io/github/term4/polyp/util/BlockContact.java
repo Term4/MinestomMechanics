@@ -6,6 +6,7 @@ import net.minestom.server.collision.Shape;
 import net.minestom.server.coordinate.Point;
 import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.Entity;
+import net.minestom.server.entity.Player;
 import net.minestom.server.instance.block.Block;
 import net.minestom.server.instance.block.BlockFace;
 import net.minestom.server.world.DimensionType;
@@ -241,4 +242,14 @@ public final class BlockContact {
         return !block.blocksMotion();
     }
 
+    /**
+     * Whether {@code block} placed at {@code cell} would overlap {@code body} - the veto condition for a server
+     * refusing 1.8 self-overlap as POLICY (cancel {@code PlayerBlockPlaceEvent} when this holds for the placer).
+     * Matches the placement checks' geometry, player boundary nudge included.
+     */
+    public static boolean overlapsBody(Block block, Point cell, Entity body) {
+        Point at = body.getPosition();
+        if (body instanceof Player) at = at.add(at.sub(cell).mul(0.0000001)); // upstream: nudged off the cell boundary
+        return block.collisionShape().intersectBox(at.sub(cell), body.getBoundingBox());
+    }
 }

@@ -80,8 +80,6 @@ public final class CompatState {
     /** Max blocks from the server eye to a placement's clicked point; {@code null} = unmanaged. */
     public @Nullable Double blockPlaceReach() { return policy.blockPlaceReach; }
     public boolean oldPlacement() { return on(policy.oldPlacement); }
-    /** The Paper-1.8 placer exclusion for legacy clients ({@code CompatPlacement}/{@code LegacySelfPlacementFix}). */
-    public boolean selfPlacement() { return on(policy.selfPlacement); }
 
     private static boolean on(@Nullable Boolean v) { return Boolean.TRUE.equals(v); }
 

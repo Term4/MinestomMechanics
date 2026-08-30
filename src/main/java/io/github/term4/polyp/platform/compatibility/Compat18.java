@@ -32,7 +32,6 @@ public final class Compat18 {
                 .oldPhysics(true)          // Animatium only: momentum threshold, no bed bounce, no honey/bubble
                 .disableEntityPush(true)   // all clients: the shared no-push collision team; disable if the app runs its own teams
                 .oldPlacement(true)        // Animatium only: no same-tick break+place refill
-                .selfPlacement(true)       // legacy only: the Paper placer exclusion (stairs into your own face)
                 .nativeShortVelocity(true) // Animatium only: gated on the advertised decoder
                 .removeAttackCooldown(true) // server-side, any client
                 .suppressThrowSwing(true)  // modern only: 1.8 doesn't swing on use
@@ -65,7 +64,6 @@ public final class Compat18 {
                 .oldPhysics(false)
                 .disableEntityPush(false)
                 .oldPlacement(false)
-                .selfPlacement(false)
                 .nativeShortVelocity(false)
                 .removeAttackCooldown(false)
                 .suppressThrowSwing(false)
