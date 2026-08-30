@@ -8,6 +8,7 @@ import io.github.term4.polyp.tracking.ClientInfoTracker;
 import net.minestom.server.collision.BoundingBox;
 import net.minestom.server.coordinate.Point;
 import net.minestom.server.instance.block.Block;
+import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.EventFilter;
@@ -35,16 +36,22 @@ public final class CompatPlacement {
     private CompatPlacement() {}
 
     /**
-     * The per-body placement entity check for mixed-version play (shaped for a shard router's body-check hook):
-     * a LEGACY placer gets the 1.8 semantics ({@link BlockContact#blocksLegacyPlacement} - passable blocks
-     * unchecked, stairs blocked only by a body covering the cell center); everyone else keeps the precise
-     * modern check their own client predicts. Animatium counts as modern for now.
+     * The per-body placement entity check for mixed-version play (shaped for a shard router's body-check hook).
+     * A LEGACY placer gets the 1.8 reference-server semantics, source-verified against Paper 1.8.8 + the 1.8.9
+     * client: the placer's own body NEVER blocks their placement (Paper passes the placer into
+     * {@code checkNoEntityCollision}, which excludes it - and the 1.8 client sends every attempt before its own
+     * prediction runs, so the server's accept is what the player sees; stairs/ladders into your own face land),
+     * and no-collision-box blocks check nobody (1.8's null-AABB skip). Other bodies stay on the precise check -
+     * the strict end of 1.8's stale-bounds race. Everyone else (Animatium included, for now) is precise
+     * throughout, matching their own client's prediction.
      */
-    public static boolean placementBodyCheck(@NotNull Player placer, @NotNull Block placing,
-                                             @NotNull Point cellRelativeEntity, @NotNull BoundingBox entityBox) {
-        return placer instanceof OptimizedPlayer op && op.compat().legacyClient()
-                ? BlockContact.blocksLegacyPlacement(placing, cellRelativeEntity, entityBox)
-                : placing.collisionShape().intersectBox(cellRelativeEntity, entityBox);
+    public static boolean placementBodyCheck(@NotNull Player placer, @NotNull Entity body, @NotNull Block placing,
+                                             @NotNull Point cellRelativeBody, @NotNull BoundingBox bodyBox) {
+        if (placer instanceof OptimizedPlayer op && op.compat().legacyClient()) {
+            if (body == placer) return false;
+            if (BlockContact.isPassable(placing)) return false;
+        }
+        return placing.collisionShape().intersectBox(cellRelativeBody, bodyBox);
     }
 
     public static void install(Polyp polyp) {
