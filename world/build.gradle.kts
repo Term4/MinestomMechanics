@@ -10,6 +10,10 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 mavenPublishing {
     coordinates(group.toString(), "polyp-world", version.toString())
+    publishToMavenCentral()
+    if (providers.gradleProperty("signingInMemoryKey").isPresent || providers.gradleProperty("signing.keyId").isPresent) {
+        signAllPublications()
+    }
 }
 
 repositories {

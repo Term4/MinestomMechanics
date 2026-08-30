@@ -52,7 +52,10 @@ repositories {
 }
 
 dependencies {
-    api(project(":world"))
+    // the :world seam is EMBEDDED in this jar (below), not a published dependency: polyp ships to Maven
+    // Central self-contained. Archipelago consumes the same classes via the thin io.github.term4:polyp-world.
+    compileOnly(project(":world"))
+    testImplementation(project(":world"))
     compileOnly(project(":codegen"))
     annotationProcessor(project(":codegen"))
     val minestomVersion = "2026.08.16-26.2"
@@ -81,4 +84,11 @@ tasks.test {
     useJUnitPlatform()
     // synchronous player spawns + relaxed thread asserts (like Minestom's Env); must be set before ServerFlag loads
     systemProperty("minestom.inside-test", "true")
+}
+// polyp publishes self-contained: the :world module's classes + sources ride this artifact
+tasks.jar {
+    from(project(":world").sourceSets.main.map { it.output })
+}
+tasks.withType<Jar>().configureEach {
+    if (name == "sourcesJar") from(project(":world").sourceSets.main.map { it.allSource })
 }
