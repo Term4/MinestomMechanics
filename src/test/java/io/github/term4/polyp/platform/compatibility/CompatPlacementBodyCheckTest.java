@@ -47,10 +47,10 @@ class CompatPlacementBodyCheckTest extends HeadlessServerTest {
             assertFalse(BlockContact.overlapsBody(Block.LADDER, feet, fp.player),
                     "no collision shape, no overlap");
             assertFalse(BlockContact.overlapsBody(Block.OAK_STAIRS, feet.add(3, 0, 0), fp.player));
-            assertTrue(BlockContact.overlapsBody(Block.OAK_STAIRS, feet, fp.player, BlockContact.Collision.PARTIAL));
-            assertFalse(BlockContact.overlapsBody(Block.OAK_STAIRS, feet, fp.player, BlockContact.Collision.FULL),
-                    "a FULL-level policy lets partial blocks through");
-            assertTrue(BlockContact.overlapsBody(Block.STONE, feet, fp.player, BlockContact.Collision.FULL));
+            // fill-level scoping is plain composition with the existing predicates
+            assertFalse(BlockContact.isFullCube(Block.OAK_STAIRS) && BlockContact.overlapsBody(Block.OAK_STAIRS, feet, fp.player),
+                    "a full-cube-only policy lets partial blocks through");
+            assertTrue(BlockContact.isFullCube(Block.STONE) && BlockContact.overlapsBody(Block.STONE, feet, fp.player));
         } finally {
             fp.player.remove();
         }
