@@ -12,7 +12,12 @@ public final class Compat {
     private Compat() {}
 
     public static CompatConfig config() {
-        return Compat18.config().toBuilder()
+        return over(Compat18.config());
+    }
+
+    /** Hypixel's deltas over {@code base} - a server's own compat knobs ride through untouched. */
+    public static CompatConfig over(CompatConfig base) {
+        return base.toBuilder()
                 // a placement overlapping the placer is refused for 1.8 clients too (vanilla 1.8 allowed it);
                 // no-collision-box blocks are unaffected, so the ladder clutch still lands
                 .legacySelfPlace(false)
