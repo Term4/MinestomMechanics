@@ -10,43 +10,35 @@ import io.github.term4.polyp.presets.scrims18.Scrims18;
 import io.github.term4.polyp.presets.vanilla.Vanilla;
 import io.github.term4.polyp.presets.vanilla18.Vanilla18;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 
 /** The shipped server presets; the primed-TNT config rides each profile ({@code MechanicsKeys.TNT}). */
 public enum Preset {
-    VANILLA18(Vanilla18::profile, UnaryOperator.identity()),
+    VANILLA18(Vanilla18::profile, Compat18::config),
     /** Modern (26.1) mechanics - nothing to reconcile, so the compat layer stays off. */
-    VANILLA(Vanilla::profile, base -> Compat18.off()),
-    HYPIXEL(Hypixel::profile, Compat::over),
+    VANILLA(Vanilla::profile, Compat18::off),
+    HYPIXEL(Hypixel::profile, Compat::config),
     /** {@link #HYPIXEL} with the BedWars-only quirks (the game-wide pearl landing). */
-    HYPIXEL_BEDWARS(Hypixel::bedwars, Compat::over),
-    MMC18(Mmc18::profile, UnaryOperator.identity()),
-    SCRIMS18(Scrims18::profile, UnaryOperator.identity());
+    HYPIXEL_BEDWARS(Hypixel::bedwars, Compat::config),
+    MMC18(Mmc18::profile, Compat18::config),
+    SCRIMS18(Scrims18::profile, Compat18::config);
 
     private final Supplier<MechanicsProfile> profile;
-    private final UnaryOperator<CompatConfig> compat;
+    private final Supplier<CompatConfig> compat;
 
-    Preset(Supplier<MechanicsProfile> profile, UnaryOperator<CompatConfig> compat) {
+    Preset(Supplier<MechanicsProfile> profile, Supplier<CompatConfig> compat) {
         this.profile = profile;
         this.compat = compat;
     }
 
-    /** The mechanics profile (fresh build); the server layers compat + fixes on top. */
+    /** The mechanics profile (fresh build); the server layers fixes on top. */
     public MechanicsProfile profile() { return profile.get(); }
 
-    /** {@link #compat(CompatConfig)} over the plain 1.8 set. */
-    public CompatConfig compat() { return compat(Compat18.config()); }
-
     /**
-     * This network's cross-version deltas over {@code base} ({@code null} = the plain 1.8 set) - most presets
-     * run 1.8 compat unchanged, Hypixel refuses self-overlapping placement, modern vanilla runs none. Set the
-     * result under {@code MechanicsKeys.COMPAT}; passing the scope it displaces keeps the server's own knobs,
-     * which matters at world scope where a profile member replaces the global's wholesale.
+     * The cross-version layer this network runs (fresh build): the plain 1.8 set for most, Hypixel's
+     * self-overlap placement refusal for the Hypixel pair, none for modern vanilla. Set it under
+     * {@code MechanicsKeys.COMPAT} - a preset pairing the same mechanics with a different compat layer is
+     * its own entry here, not something a caller assembles.
      */
-    public CompatConfig compat(@Nullable CompatConfig base) {
-        return compat.apply(base != null ? base : Compat18.config());
-    }
+    public CompatConfig compat() { return compat.get(); }
 }

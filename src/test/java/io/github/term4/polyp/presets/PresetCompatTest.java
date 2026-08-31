@@ -1,7 +1,5 @@
 package io.github.term4.polyp.presets;
 
-import io.github.term4.polyp.platform.compatibility.Compat18;
-import io.github.term4.polyp.platform.compatibility.CompatConfig;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -34,17 +32,12 @@ class PresetCompatTest {
         assertEquals(Boolean.FALSE, Preset.VANILLA.compat().legacyHitbox, "nothing to reconcile on 26.1");
     }
 
-    /** At world scope a profile member replaces the global's, so a preset applies its deltas OVER what it displaces. */
+    /** Every preset hands back a complete layer - callers set it, they never assemble one. */
     @Test
-    void presetDeltasRideOverTheServersOwnKnobs() {
-        CompatConfig server = Compat18.config().toBuilder().animatiumDebug(true).blockPlaceReach(3.0).build();
-
-        CompatConfig hypixel = Preset.HYPIXEL.compat(server);
-        assertEquals(Boolean.FALSE, hypixel.legacySelfPlace, "the network's delta applies");
-        assertEquals(Boolean.TRUE, hypixel.animatiumDebug, "the server's own knob survives");
-        assertEquals(3.0, hypixel.blockPlaceReach, "and so does a knob it tuned");
-
-        assertEquals(Boolean.TRUE, Preset.MMC18.compat(server).animatiumDebug, "a 1.8 preset passes it through");
-        assertNull(Preset.MMC18.compat(server).legacySelfPlace);
+    void everyPresetCarriesAWholeLayer() {
+        for (Preset preset : Preset.values()) {
+            assertNotNull(preset.compat(), preset + " has a compat layer");
+            assertNotNull(preset.profile(), preset + " has a mechanics profile");
+        }
     }
 }
