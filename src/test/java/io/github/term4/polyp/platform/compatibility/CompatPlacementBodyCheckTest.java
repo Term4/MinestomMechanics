@@ -56,21 +56,23 @@ class CompatPlacementBodyCheckTest extends HeadlessServerTest {
         }
     }
 
-    /** The hypixel rule as a drop-in: self-overlap refused for legacy too, ladders still clutch. */
+    /** legacySelfPlace(false) - the hypixel profile: self-overlap refused for legacy too, ladders still clutch. */
     @Test
-    void strictRuleRefusesLegacySelfOverlapButKeepsLadders() {
+    void profileCanRefuseLegacySelfOverlapAndStillAllowLadders() {
         FakePlayer fp = FakePlayer.connect(instance, new Pos(0.5, 65, 872.5), "StrictGate");
         OptimizedPlayer op = (OptimizedPlayer) fp.player;
         BoundingBox player = new BoundingBox(0.6, 1.8, 0.6);
         Vec centered = new Vec(0.5, 0, 0.5);
         try {
             op.compat().setLegacyClient(true);
-            assertTrue(CompatPlacement.strictPlacementBodyCheck(op, op, Block.OAK_STAIRS, centered, player),
+            op.compat().apply(CompatConfig.builder().legacySelfPlace(false).build());
+
+            assertTrue(CompatPlacement.placementBodyCheck(op, op, Block.OAK_STAIRS, centered, player),
                     "stairs into your own face are refused, unlike vanilla 1.8");
-            assertTrue(CompatPlacement.strictPlacementBodyCheck(op, op, Block.STONE, centered, player));
-            assertFalse(CompatPlacement.strictPlacementBodyCheck(op, op, Block.LADDER, centered, player),
-                    "passable: the ladder clutch survives the strict rule");
-            assertFalse(CompatPlacement.strictPlacementBodyCheck(op, op, Block.OAK_STAIRS, centered.add(3, 0, 0), player),
+            assertTrue(CompatPlacement.placementBodyCheck(op, op, Block.STONE, centered, player));
+            assertFalse(CompatPlacement.placementBodyCheck(op, op, Block.LADDER, centered, player),
+                    "passable: the ladder clutch survives the refusal");
+            assertFalse(CompatPlacement.placementBodyCheck(op, op, Block.OAK_STAIRS, centered.add(3, 0, 0), player),
                     "a cell clear of the body still places");
         } finally {
             fp.player.remove();

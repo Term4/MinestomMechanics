@@ -50,6 +50,10 @@ public final class CompatConfig {
     public final @Nullable Double blockPlaceReach;
     /** No placing against an air cell. Enforced client-side (Animatium) AND server-side ({@code CompatPlacement}, any client). */
     public final @Nullable Boolean oldPlacement;
+    /** A LEGACY placer's own body never blocks their placement, as Paper 1.8 had it; {@code null} = on.
+     *  {@code false} refuses self-overlap the way Hypixel does - no stairs into your own face - while
+     *  no-collision-box blocks (the ladder clutch) still land. Modern placers are precise either way. */
+    public final @Nullable Boolean legacySelfPlace;
     /** Remove the modern attack cooldown + crosshair indicator (huge {@code ATTACK_SPEED}). Server-side, any client. */
     public final @Nullable Boolean removeAttackCooldown;
     /** No arm-swing when a modern client throws a projectile: its inventory VIEW shows a non-usable reskin; the server item stays the real snowball/egg/pearl. */
@@ -120,6 +124,7 @@ public final class CompatConfig {
         disableBubbleColumn = b.disableBubbleColumn;
         disableEntityPush = b.disableEntityPush;
         oldPlacement = b.oldPlacement;
+        legacySelfPlace = b.legacySelfPlace;
         removeAttackCooldown = b.removeAttackCooldown;
         suppressThrowSwing = b.suppressThrowSwing;
         fistRayHits = b.fistRayHits;
@@ -166,6 +171,7 @@ public final class CompatConfig {
         private @Nullable Boolean disableBubbleColumn;
         private @Nullable Boolean disableEntityPush;
         private @Nullable Boolean oldPlacement;
+        private @Nullable Boolean legacySelfPlace;
         private @Nullable Boolean removeAttackCooldown;
         private @Nullable Boolean suppressThrowSwing;
         private @Nullable Boolean fistRayHits;
@@ -205,6 +211,7 @@ public final class CompatConfig {
             disableBubbleColumn = c.disableBubbleColumn;
             disableEntityPush = c.disableEntityPush;
             oldPlacement = c.oldPlacement;
+            legacySelfPlace = c.legacySelfPlace;
             removeAttackCooldown = c.removeAttackCooldown;
             suppressThrowSwing = c.suppressThrowSwing;
             fistRayHits = c.fistRayHits;
@@ -243,6 +250,7 @@ public final class CompatConfig {
         public Builder disableBubbleColumn(@Nullable Boolean v) { disableBubbleColumn = v; return this; }
         public Builder disableEntityPush(@Nullable Boolean v) { disableEntityPush = v; return this; }
         public Builder oldPlacement(@Nullable Boolean v) { oldPlacement = v; return this; }
+        public Builder legacySelfPlace(@Nullable Boolean v) { legacySelfPlace = v; return this; }
         public Builder removeAttackCooldown(@Nullable Boolean v) { removeAttackCooldown = v; return this; }
         public Builder suppressThrowSwing(@Nullable Boolean v) { suppressThrowSwing = v; return this; }
         public Builder fistRayHits(@Nullable Boolean v) { fistRayHits = v; return this; }

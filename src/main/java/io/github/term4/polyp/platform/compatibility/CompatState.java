@@ -81,6 +81,9 @@ public final class CompatState {
     public @Nullable Double blockPlaceReach() { return policy.blockPlaceReach; }
     public boolean oldPlacement() { return on(policy.oldPlacement); }
 
+    /** A legacy placer's own body never blocks their placement (1.8); {@code false} = the hypixel refusal. */
+    public boolean legacySelfPlace() { return policy.legacySelfPlace == null || policy.legacySelfPlace; }
+
     private static boolean on(@Nullable Boolean v) { return Boolean.TRUE.equals(v); }
 
     public boolean hookPredictionEscort() { return policy.hookPredictionEscort == null || policy.hookPredictionEscort; }

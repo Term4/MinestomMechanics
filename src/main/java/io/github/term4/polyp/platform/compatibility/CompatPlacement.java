@@ -45,30 +45,18 @@ public final class CompatPlacement {
      * precise check; everyone else (Animatium included, for now) is precise throughout, matching their own
      * client's prediction.
      *
-     * <p>Server POLICY on top of the vanilla mechanic is the app's. Refusing self-overlap outright is
-     * {@link #strictPlacementBodyCheck} - install it in place of this rule, no listener needed. Narrower
-     * policy (a fill level, one arena, one gamemode) cancels {@code PlayerBlockPlaceEvent} instead - both
-     * placement paths fire it with the resolved target and resync on cancel - with
-     * {@link BlockContact#overlapsBody} as the condition, composed with
-     * {@link BlockContact#isFullCube}/{@link BlockContact#isPassable}.
+     * <p>{@link CompatConfig#legacySelfPlace} scopes the self-exemption through the profile: a Hypixel-style
+     * world turns it off and a 1.8 client stops landing stairs in its own face, while the passable skip keeps
+     * the ladder clutch. Narrower policy still cancels {@code PlayerBlockPlaceEvent} - both placement paths
+     * fire it with the resolved target and resync on cancel - with {@link BlockContact#overlapsBody} as the
+     * condition, composed with {@link BlockContact#isFullCube}/{@link BlockContact#isPassable}.
      */
     public static boolean placementBodyCheck(@NotNull Player placer, @NotNull Entity body, @NotNull Block placing,
                                              @NotNull Point cellRelativeBody, @NotNull BoundingBox bodyBox) {
         if (placer instanceof OptimizedPlayer op && op.compat().legacyClient()) {
-            if (body == placer) return false;
+            if (body == placer && op.compat().legacySelfPlace()) return false;
             if (BlockContact.isPassable(placing)) return false;
         }
-        return placing.collisionShape().intersectBox(cellRelativeBody, bodyBox);
-    }
-
-    /**
-     * The precise check for EVERY placer, legacy included - the Hypixel-style rule: a stair into your own face
-     * is refused where {@link #placementBodyCheck} lets a 1.8 client land it, while a ladder (no collision box)
-     * still goes in. A drop-in replacement for the body-check hook; compose the two per world to scope it.
-     */
-    public static boolean strictPlacementBodyCheck(@NotNull Player placer, @NotNull Entity body, @NotNull Block placing,
-                                                   @NotNull Point cellRelativeBody, @NotNull BoundingBox bodyBox) {
-        if (BlockContact.isPassable(placing)) return false;
         return placing.collisionShape().intersectBox(cellRelativeBody, bodyBox);
     }
 
