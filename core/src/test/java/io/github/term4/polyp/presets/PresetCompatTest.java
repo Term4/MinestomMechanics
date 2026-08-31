@@ -1,5 +1,6 @@
 package io.github.term4.polyp.presets;
 
+import io.github.term4.polyp.testsupport.HeadlessServerTest;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -7,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 /** Each preset carries the cross-version layer of the network it recreates, not just its mechanics. */
-class PresetCompatTest {
+class PresetCompatTest extends HeadlessServerTest { // profile() boots Fx, which needs the server
 
     @Test
     void hypixelRefusesSelfOverlappingPlacementWhereThe18PresetsAllowIt() {

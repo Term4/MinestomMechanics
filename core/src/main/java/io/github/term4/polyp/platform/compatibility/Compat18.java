@@ -62,14 +62,21 @@ public final class Compat18 {
                 .leftClickItemUsage(false)
                 .disableAutoSneak(false)
                 .oldPhysics(false)
+                .oldMomentum(false)
+                .disableBedBounce(false)
+                .disableHoneyPhysics(false)
+                .disableBubbleColumn(false)
                 .disableEntityPush(false)
                 .oldPlacement(false)
+                .legacySelfPlace(true) // legacy-native mechanic, not a modern-client knob: off keeps 1.8 placement
+                .hookPredictionEscort(false)
                 .nativeShortVelocity(false)
                 .removeAttackCooldown(false)
                 .suppressThrowSwing(false)
                 .fistRayHits(false)
                 .swordBlockingPose(false)
                 .removeUseCooldowns(false)
+                .animatiumDebug(false)
                 .build();
     }
 }
