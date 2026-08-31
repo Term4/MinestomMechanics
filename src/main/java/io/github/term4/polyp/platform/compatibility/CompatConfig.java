@@ -51,8 +51,7 @@ public final class CompatConfig {
     /** No placing against an air cell. Enforced client-side (Animatium) AND server-side ({@code CompatPlacement}, any client). */
     public final @Nullable Boolean oldPlacement;
     /** A LEGACY placer's own body never blocks their placement, as Paper 1.8 had it; {@code null} = on.
-     *  {@code false} refuses self-overlap the way Hypixel does - no stairs into your own face - while
-     *  no-collision-box blocks (the ladder clutch) still land. Modern placers are precise either way. */
+     *  {@code false} = the hypixel refusal: stairs into your own face bounce, passable blocks still land. */
     public final @Nullable Boolean legacySelfPlace;
     /** Remove the modern attack cooldown + crosshair indicator (huge {@code ATTACK_SPEED}). Server-side, any client. */
     public final @Nullable Boolean removeAttackCooldown;

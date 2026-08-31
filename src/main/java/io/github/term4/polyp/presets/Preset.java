@@ -34,11 +34,7 @@ public enum Preset {
     /** The mechanics profile (fresh build); the server layers fixes on top. */
     public MechanicsProfile profile() { return profile.get(); }
 
-    /**
-     * The cross-version layer this network runs (fresh build): the plain 1.8 set for most, Hypixel's
-     * self-overlap placement refusal for the Hypixel pair, none for modern vanilla. Set it under
-     * {@code MechanicsKeys.COMPAT} - a preset pairing the same mechanics with a different compat layer is
-     * its own entry here, not something a caller assembles.
-     */
+    /** The cross-version layer this network runs (fresh build), for {@code MechanicsKeys.COMPAT}. Same
+     *  mechanics + different compat = its own preset entry, never caller-assembled. */
     public CompatConfig compat() { return compat.get(); }
 }

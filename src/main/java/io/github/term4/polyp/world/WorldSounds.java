@@ -38,8 +38,7 @@ public final class WorldSounds {
 
     private static void onPlace(Polyp polyp, PlayerBlockPlaceEvent e) {
         if (e.isCancelled()) return; // a compat rule (reach / air) may cancel the placement
-        // block CENTER, like vanilla's ItemBlock/BlockItem: client-side-sound mods cancel the server copy by
-        // matching it against the block they just placed, and a corner-positioned packet slips past that
+        // block center like vanilla ItemBlock: client sound mods dedup the server copy by position
         Fx.play(polyp.services(), Fx.BLOCK_PLACE,
                 FxContext.at(MechanicsWorld.of(e.getPlayer()), e.getBlockPosition().add(0.5, 0.5, 0.5), e.getPlayer())
                         .withDetail(e.getBlock()));

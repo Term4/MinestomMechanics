@@ -17,6 +17,7 @@ import net.minestom.server.network.packet.server.play.SoundEffectPacket;
 import net.minestom.server.particle.Particle;
 import net.minestom.server.sound.SoundEvent;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -29,8 +30,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FxTest extends HeadlessServerTest {
 
+    private MechanicsProfile previous;
+
+    @BeforeEach
+    void keepScope() { previous = Polyp.getInstance().profiles().global(); }
+
+    // restore, never null: other classes resolve configs off whatever global is installed
     @AfterEach
-    void clearScope() { Polyp.getInstance().profiles().setGlobal(null); }
+    void restoreScope() { Polyp.getInstance().profiles().setGlobal(previous); }
 
     private void useRegistry(FxRegistry reg) {
         Polyp.getInstance().profiles().setGlobal(
